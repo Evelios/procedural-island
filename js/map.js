@@ -92,8 +92,36 @@ Map.prototype.generateTectonicPlates = function() {
 	// Determine the motion at the plate edge
 	for (var i = 0; i < this.plates.edges.length; i++) {
 		var edge = this.plates.edges[i];
-		var direction = edge.d0.direction.add(edge.d1.direction);
+		var d0 = edge.d0.direction;
+		var d1 = edge.d1.direction;
+		var direction = d0.add(d1);
+
 		edge.direction = direction;
+
+		edge.boundaryType = null;
+
+		// There is a good boundary at this edge
+		if (direction.magnitude() <= 1.0) {
+
+			// I think it could be easier and simpler to Calculate
+			// the angle between r and d0 than to use projections
+
+			var r = edge.d0.position.subtract(edge.d1.position);
+			r = r.normalize();
+			var nr = r.multiply(-1);
+
+			var pd0 = Vector.proj(d0, r);
+			var x1 = pd0.add(r);
+
+
+			var pd1 = Vector.proj(d1, nr);
+			var x2 = pd1.add(nr);
+
+			// Calculate the average
+			var boundary = (x1.magnitude() + x2.magnitude()) / 2;
+
+			edge.boundaryType = boundary;
+		}
 	}
 }
 
@@ -165,7 +193,7 @@ Map.prototype.drawPlates = function(screen) {
 	for (var i = 0; i < this.plates.centers.length; i++) {
 		var cell = this.plates.centers[i];
 		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
-		this.drawCell(cell, screen, color);
+		// this.drawCell(cell, screen, color);
 
 		var arrow = cell.position.add(cell.direction.multiply(50));
 		Draw.line(screen, cell.position, arrow, 'black', 3);
@@ -175,12 +203,26 @@ Map.prototype.drawPlates = function(screen) {
 	for (var i = 0; i < this.plates.edges.length; i++) {
 		var edge = this.plates.edges[i];
 
-		// var arrow = edge.midpoint.add(edge.direction.multiply(30));
+		var arrow = edge.midpoint.add(edge.direction.multiply(30));
 		// Draw.line(screen, edge.midpoint, arrow, 'yellow', 3);
 
-		if (edge.direction.magnitude() < 1) {
-			Draw.line(screen, edge.v0.position, edge.v1.position, 'yellow', 3);
+		// if (edge.direction.magnitude() < 1) {
+		// 	Draw.line(screen, edge.v0.position, edge.v1.position, 'yellow', 3);
+		// }
+
+		if (edge.boundaryType != null) {
+			var edgeColor;
+			if (edge.boundaryType < 1.0) {
+				edgeColor = Util.lerpColor('#FF0000', '#00FF00', edge.boundaryType);
+			} else {
+				edgeColor = Util.lerpColor('#00FF00', '#0000FF', edge.boundaryType - 1);
+			}
+			Draw.line(screen, edge.v0.position, edge.v1.position, edgeColor, 3);
+		} else {
+			Draw.line(screen, edge.v0.position, edge.v1.position, '#A0A0A0', 3);
 		}
+
+		Draw.point(screen, edge.midpoint, 'red');
 	}
 }
 

@@ -31,6 +31,10 @@ var Vector = function(x, y) {
     return new Vector(this.x / scalar, this.y / scalar);
   }
 
+  this.dot = function(other) {
+      return this.x * other.x + this.y * other.y;
+  }
+
   this.magnitude = function() {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
@@ -50,6 +54,15 @@ var Vector = function(x, y) {
   }
 }
 
+Vector.proj = function(a, b) {
+  return b.multiply(a.dot(b) / Math.pow(b.magnitude(), 2) );
+}
+
+
+// Return the angle between two vectors in radians
+Vector.angle = function(a, b) {
+  return acos(a.dot(b) / (a.magnitude() * b.magnitude()));
+}
 //------------------------------------------------------------------------------
 
 Vector.distance = function(a, b) {

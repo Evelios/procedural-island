@@ -1,0 +1,26 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding : 0;
+}
+
+body {
+	background-color: #BBB;
+}
+
+.wrapper {
+	padding: 50px;
+	background-color: #BBB;
+}
+
+.buttons {
+  padding: 20px;
+}
+
+#jsHook {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+
+}

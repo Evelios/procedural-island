@@ -187,7 +187,7 @@ Diagram.prototype.convertDiagram = function(voronoi) {
       newEdge.d1 = center2
       newEdge.v0 = corner1;
       newEdge.v1 = corner2;
-      newEdge.midpoint = corner1.position.midpoint(corner2.position);
+      newEdge.midpoint = Vector.midpoint(corner1.position, corner2.position);
 
       // Update the corner objects
       corner1.protrudes.push(newEdge);

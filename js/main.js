@@ -9,6 +9,12 @@ function main() {
 
   var size = 500;
   canvas.height = canvas.width = 500;
+  data.height = canvas.height;
+  data.width = canvas.width;
+
+  data.numPoints = 500;
+  data.pointSeed = 0;
+  data.mapSeed = 0;
 
   var backgroundColor = 'white';
   var screen = canvas.getContext('2d');
@@ -18,11 +24,14 @@ function main() {
   screen.fillStyle = backgroundColor;
   screen.fillRect(0, 0, canvas.width, canvas.height);
 
-  var map = new Map(canvas.width, canvas.height, 500);
-  data.map = map;
-
+  generate();
   drawMap();
+}
 
+function generate() {
+  
+  data.map = new Map(data.width, data.height, data.numPoints);
+  drawMap();
 }
 
 function drawMap() {

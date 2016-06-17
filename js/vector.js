@@ -16,6 +16,12 @@ var Vector = function(x, y) {
   }
 }
 
+// Standard Vectors
+
+Vector.zero = function() {
+  return new Vector(0, 0);
+}
+
 // Basic Math Functions
 
 Vector.prototype.add = function(other) {
@@ -32,6 +38,12 @@ Vector.prototype.multiply = function(scalar) {
 
 Vector.prototype.divide = function(scalar) {
   return new Vector(this.x / scalar, this.y / scalar);
+}
+
+Vector.prototype.rotate = function(radians) {
+  var c = Math.cos(radians);
+  var s = Math.cos(radians);
+  return new Vector(c * this.x - s * this.y, s * this.x + c * this.y);
 }
 
 // Advanced Vector Functions

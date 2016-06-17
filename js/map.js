@@ -60,14 +60,67 @@ Map.prototype.generatePolygons = function() {
 	this.corners = diagram.corners;
 	this.edges = diagram.edges;
 }
+//------------------------------------------------------------------------------
+// Helper function for the island shape functions
 
+Map.prototype.gradient = function(pos) {
+  var center = new Vector(this.width / 2, this.height / 2);
+  var size = new Vector(this.width, this.height);
+  var deltaVector = pos.subtract(center);
+  var normalized = new Vector(deltaVector.x / center.x, deltaVector.y / center.y);
+  var delta = normalized.magnitude();
+  return delta;
+}
+
+// Helper function to create the land tiles
+// return (bool): true if position is land, false otherwise
+Map.prototype.perlinIslandShape = function(pos) {
+	// Tuneable parameters
+  var threshold = 0.2;
+  var scaleFactor = 10;
+
+  var height = (noise.perlin2(pos.x / this.width * scaleFactor,
+                              pos.y / this.height * scaleFactor) + 1) / 2;
+
+  var gradient = this.gradient(pos);
+  height -= gradient * gradient;
+  return height > threshold;
+}
+
+Map.prototype.prelinLandShape = function(pos) {
+	// Tuneable parameters
+	var scaleFactor = 3;
+	var threshold = 0.5;
+
+	var height1 = noise.perlin2(pos.x / this.width * scaleFactor,
+								pos.y / this.height * scaleFactor);
+	height1 = (height1 + 1) / 2;
+	var height2 = noise.perlin2((pos.x + this.width) / this.width * scaleFactor,
+								(pos.y + this.height) / this.height * scaleFactor);
+	height2 = (height2 + 1) / 2;
+
+	var height = (height1 + height2) / 2;
+
+	return height > threshold;
+}
+
+//------------------------------------------------------------------------------
+
+Map.prototype.generateLandShape = function() {
+
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+		center.water = !this.prelinLandShape(center.position);
+	}
+}
 
 //------------------------------------------------------------------------------
 
 Map.prototype.generateTectonicPlates = function() {
 
-	// Tuneable parameter
-	var numPlates = 10;
+	// Tuneable parameters
+	var numPlates = 20;
+	var numRelaxations = 1;
 
 	var platePositions = [];
 
@@ -78,7 +131,7 @@ Map.prototype.generateTectonicPlates = function() {
 	}
 
 	// Create the voronoi diagram of the points
-	this.plates = this.generateDiagram(platePositions, 1);
+	this.plates = this.generateDiagram(platePositions, numRelaxations);
 
 	for (var i = 0; i < this.plates.centers.length; i++) {
 		var plate = this.plates.centers[i];
@@ -104,14 +157,6 @@ Map.prototype.generateTectonicPlates = function() {
 		this.plates.centers[minIndex].tiles.push(tile);
 	}
 
-	// Assign a random movement direction to the plates;
-	for (var i = 0; i < this.plates.centers.length; i++) {
-		var plate = this.plates.centers[i];
-		var direction = new Vector(Util.randRange(-1, 1), Util.randRange(-1, 1));
-		direction = direction.normalize();
-		plate.direction = direction;
-	}
-
 	// Determine if the plate is an oceanic plate or a continental plate
 	// plateType goes from 0 to 1 from oceanic to continental
 	for (var i = 0; i < this.plates.centers.length; i++) {
@@ -128,9 +173,37 @@ Map.prototype.generateTectonicPlates = function() {
 		plate.plateType = plateType;
 	}
 
+	// Determine the plates movement direction
+	// Plates want to move towards continental plates and away from
+	// oceanic plates
+	for (var i = 0; i < this.plates.centers.length; i++) {
+		var plate = this.plates.centers[i];
+
+		var direction = Vector.zero();
+
+		for (var j = 0; j < plate.neighbors.length; j++) {
+			var neighbor = plate.neighbors[j];
+
+			var neighborDirection = neighbor.position.subtract(plate.position).normalize();
+			var plateDirection = (neighbor.plateType * 2) - 1;
+			if (plate.plateType > 0.5) {
+				plateDirection *= -1;
+			}
+
+			var neighborInfluence = neighborDirection.multiply(plateDirection);
+
+			direction = direction.add(neighborInfluence);
+		}
+		plate.direction = direction.normalize();
+	}
+
 	// Determine the motion at the plate edge
 	for (var i = 0; i < this.plates.edges.length; i++) {
 		var edge = this.plates.edges[i];
+		if (!edge.d1) {
+			edge.direction = Vector.zero();
+			continue;
+		}
 		var d0 = edge.d0.direction;
 		var d1 = edge.d1.direction;
 		var direction = d0.add(d1);
@@ -161,37 +234,6 @@ Map.prototype.generateTectonicPlates = function() {
 
 			edge.boundaryType = boundary;
 		}
-	}
-}
-
-//------------------------------------------------------------------------------
-// Helper function to create the land tiles
-// return (bool): true if position is land, false otherwise
-
-Map.prototype.perlinIslandShape = function(pos) {
-	// Tuneable parameters
-	var scaleFactor = 3;
-	var threshold = 0.5;
-
-	var height1 = noise.perlin2(pos.x / this.width * scaleFactor,
-								pos.y / this.height * scaleFactor);
-	height1 = (height1 + 1) / 2;
-	var height2 = noise.perlin2((pos.x + this.width) / this.width * scaleFactor,
-								(pos.y + this.height) / this.height * scaleFactor);
-	height2 = (height2 + 1) / 2;
-
-	var height = (height1 + height2) / 2;
-
-	return height > threshold;
-}
-
-//------------------------------------------------------------------------------
-
-Map.prototype.generateLandShape = function() {
-
-	for (var i = 0; i < this.centers.length; i++) {
-		var center = this.centers[i];
-		center.water = !this.perlinIslandShape(center.position);
 	}
 }
 
@@ -233,13 +275,14 @@ Map.prototype.drawPlates = function(screen) {
 		var plate = this.plates.centers[i];
 		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
 
-		var plateColor;
-		if (plate.plateType < 0.5) {
-			plateColor = Util.hexToRgb(this.water, 0.5);
-		} else {
-			plateColor = Util.hexToRgb(this.land, 0.5);
-		}
-		this.drawCell(plate, screen, plateColor)
+		// Draw Oceanic and Continental plates
+		// var plateColor;
+		// if (plate.plateType < 0.5) {
+		// 	plateColor = Util.hexToRgb(this.water, 0.5);
+		// } else {
+		// 	plateColor = Util.hexToRgb(this.land, 0.5);
+		// }
+		// this.drawCell(plate, screen, plateColor)
 
 
 		// for (var j = 0; j < plate.tiles.length; j++) {
@@ -248,8 +291,8 @@ Map.prototype.drawPlates = function(screen) {
 		// }
 
 		var arrow = plate.position.add(plate.direction.multiply(50));
-		Draw.line(screen, plate.position, arrow, 'black', 3);
-		Draw.point(screen, plate.position, 'red');
+		// Draw.line(screen, plate.position, arrow, 'black', 3);
+		// Draw.point(screen, plate.position, 'red');
 	}
 
 	for (var i = 0; i < this.plates.edges.length; i++) {
@@ -274,7 +317,7 @@ Map.prototype.drawPlates = function(screen) {
 			Draw.line(screen, edge.v0.position, edge.v1.position, '#A0A0A0', 3);
 		}
 
-		Draw.point(screen, edge.midpoint, 'red');
+		// Draw.point(screen, edge.midpoint, 'red');
 	}
 }
 
@@ -285,14 +328,14 @@ Map.prototype.drawDiagram = function(screen, delaunay) {
 	for (var i = 0; i < this.edges.length; i++) {
 		var edge = this.edges[i];
 		var d0 = edge.d0.position;
-		var d1 = edge.d1.position;
+		var d1 = edge.d1 ? edge.d1.position : null;
 		var v0 = edge.v0.position;
 		var v1 = edge.v1.position;
 
 		// Draw Voronoi Diagram
 		Draw.line(screen, v0, v1, 'blue');
 
-		if (delaunay) {
+		if (delaunay && d1) {
 		// Draw Delaunay Diagram
 		Draw.line(screen, d0, d1, 'yellow')
 	  	}

@@ -38,6 +38,17 @@ Array.prototype.extendNew = function(arr) {
   }
 }
 
+// Searches through the array and looks at the array element property to
+// see if it matches value
+Array.prototype.findProp = function(value, prop) {
+  for (var i = 0, l = this.length; i < l; i++) {
+    var ele = this[i];
+    if (has(ele, prop) && ele[prop] == value) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 // *********** Utility Functions ***********************************************
 

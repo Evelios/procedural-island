@@ -1,4 +1,5 @@
 var Center = function(pos) {
+  this.id = -1;
   this.position = pos;
   // Set of adjacent polygons
   this.neighbors = [];
@@ -13,6 +14,7 @@ var Center = function(pos) {
 //------------------------------------------------------------------------------
 
 var Edge = function() {
+  this.id = -1;
   // Polygon, center objects connected by Delaunay edges
   this.d0 = null;
   this.d1 = null;
@@ -28,6 +30,7 @@ var Edge = function() {
 //------------------------------------------------------------------------------
 
 var Corner = function(pos) {
+  this.id = -1;
   this.position = pos;
   // Set of polygons touching this edge
   this.touches = [];
@@ -125,11 +128,15 @@ Diagram.prototype.convertDiagram = function(voronoi) {
   this.corners = []
   this.edges = []
 
+  var cornerId = 0;
+  var edgeId = 0;
+
   // Copy over all the center nodes
   for (var i = 0; i < voronoi.cells.length; i++) {
     var site = voronoi.cells[i].site;
     var pos = new Vector(site.x, site.y);
     var center = new Center(pos);
+    center.id = site.voronoiId;
     centerLookup[pos.asKey()] = center;
     this.centers.push(center);
   }
@@ -142,6 +149,7 @@ Diagram.prototype.convertDiagram = function(voronoi) {
     if (edge.va && edge.vb && edge.lSite && edge.rSite) {
 
       var newEdge = new Edge();
+      newEdge.id = edgeId++;
 
       // Convert voronoi edge to a useable form
       // Corner positions
@@ -167,6 +175,7 @@ Diagram.prototype.convertDiagram = function(voronoi) {
 
       if (!has(cornerLookup, va.asKey())) {
         corner1 = new Corner(va);
+        corner1.id = cornerId++;
         corner1.border = isBorder(va, this.bbox);
         cornerLookup[va.asKey()] = corner1;
         this.corners.push(corner1);
@@ -175,6 +184,7 @@ Diagram.prototype.convertDiagram = function(voronoi) {
       }
       if (!has(cornerLookup, vb.asKey())) {
         corner2 = new Corner(vb);
+        corner2.id = cornerId++;
         corner2.border = isBorder(vb, this.bbox);
         cornerLookup[vb.asKey()] = corner2;
         this.corners.push(corner2);

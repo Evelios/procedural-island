@@ -19,9 +19,8 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 Map.prototype.generateMap = function() {
 
 	this.generatePolygons();
-	this.generateTectonicPlates();
-
 	this.generateLandShape();
+	this.generateTectonicPlates();
 }
 
 //------------------------------------------------------------------------------
@@ -81,12 +80,52 @@ Map.prototype.generateTectonicPlates = function() {
 	// Create the voronoi diagram of the points
 	this.plates = this.generateDiagram(platePositions, 1);
 
+	for (var i = 0; i < this.plates.centers.length; i++) {
+		var plate = this.plates.centers[i];
+		plate.tiles = []
+	}
+
+	// Assign map polygons to their corresponding plates
+	for (var i = 0; i < this.centers.length; i++) {
+		var tile = this.centers[i];
+
+		var minDistance = Infinity;
+		var minIndex = -1;
+		// Find closest plate to the current point
+		for (var k = 0; k < this.plates.centers.length; k++) {
+			var plate = this.plates.centers[k];
+
+			var distance = Vector.distance(tile.position, plate.position);
+			if (distance < minDistance) {
+				minDistance = distance;
+				minIndex = k;
+			}
+		}
+		this.plates.centers[minIndex].tiles.push(tile);
+	}
+
 	// Assign a random movement direction to the plates;
 	for (var i = 0; i < this.plates.centers.length; i++) {
 		var plate = this.plates.centers[i];
 		var direction = new Vector(Util.randRange(-1, 1), Util.randRange(-1, 1));
 		direction = direction.normalize();
 		plate.direction = direction;
+	}
+
+	// Determine if the plate is an oceanic plate or a continental plate
+	// plateType goes from 0 to 1 from oceanic to continental
+	for (var i = 0; i < this.plates.centers.length; i++) {
+		var plate = this.plates.centers[i];
+		var plateType = 0;
+
+		for (var j = 0; j < plate.tiles.length; j++) {
+			var tile = plate.tiles[j];
+			// Need to fix this so it only counts oceans, although it doesn't make
+			// that big of a difference
+			plateType += tile.water ? 0 : 1;
+		}
+		plateType /= plate.tiles.length;
+		plate.plateType = plateType;
 	}
 
 	// Determine the motion at the plate edge
@@ -191,13 +230,26 @@ Map.prototype.drawColor = function(screen) {
 
 Map.prototype.drawPlates = function(screen) {
 	for (var i = 0; i < this.plates.centers.length; i++) {
-		var cell = this.plates.centers[i];
+		var plate = this.plates.centers[i];
 		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
-		// this.drawCell(cell, screen, color);
 
-		var arrow = cell.position.add(cell.direction.multiply(50));
-		Draw.line(screen, cell.position, arrow, 'black', 3);
-		Draw.point(screen, cell.position, 'red');
+		var plateColor;
+		if (plate.plateType < 0.5) {
+			plateColor = Util.hexToRgb(this.water, 0.5);
+		} else {
+			plateColor = Util.hexToRgb(this.land, 0.5);
+		}
+		this.drawCell(plate, screen, plateColor)
+
+
+		// for (var j = 0; j < plate.tiles.length; j++) {
+		// 	var tile = plate.tiles[j];
+		// 	this.drawCell(tile, screen, color);
+		// }
+
+		var arrow = plate.position.add(plate.direction.multiply(50));
+		Draw.line(screen, plate.position, arrow, 'black', 3);
+		Draw.point(screen, plate.position, 'red');
 	}
 
 	for (var i = 0; i < this.plates.edges.length; i++) {

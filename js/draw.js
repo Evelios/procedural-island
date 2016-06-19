@@ -13,7 +13,7 @@ Draw.setFill = function(screen, color) {
 }
 
 // http://stackoverflow.com/questions/7812514/drawing-a-dot-on-html5-canvas
-Draw.point = function(screen, position, color=null) {
+Draw.point = function(screen, position, color) {
 	// Draws a point on the screen
 
 	Draw.setStroke(screen, color);

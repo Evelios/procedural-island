@@ -70,7 +70,7 @@ Diagram.prototype.relaxSites = function(voronoi) {
   while(iCell--) {
     cell = cells[iCell];
     site = this.cellCentroid(cell);
-    sites.push(new Vector(Math.round(site.x), Math.round(site.y)));
+    sites.push(new Vector(site.x, site.y));
   }
   return sites;
 }

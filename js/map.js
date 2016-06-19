@@ -1,5 +1,7 @@
 var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 
+	this.lakeThreshold = 0.3; // Fraction of water corners for water polygon
+
 	this.width = width;
 	this.height = height;
 	this.numPoints = numPoints;
@@ -8,8 +10,10 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 
 	noise.seed(this.mseed);
 
-	this.water = '#3366CC';
+	this.water = '#66B2FF';
 	this.land = '#99CC99';
+	this.coast = '#EBE0C0';
+	this.ocean = '#0066CC';
 
 	this.generateMap();
 }
@@ -19,9 +23,10 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 Map.prototype.generateMap = function() {
 
 	this.generatePolygons();
-	this.generateLandShape();
+
 	this.assignOceanCoastAndLand();
-	this.generateTectonicPlates();
+
+	// this.generateTectonicPlates();
 }
 
 //------------------------------------------------------------------------------
@@ -49,6 +54,58 @@ Map.prototype.generateDiagram = function(points, relaxations) {
 }
 
 //------------------------------------------------------------------------------
+// Helper function to create diagram
+// Lloyd relaxation helped to create uniformity among polygon centers,
+// this creates uniformity among polygon corners
+// This breakes the voronoi diagram properties
+
+Map.prototype.improveCorners = function() {
+
+	var newCorners = [];
+
+	// Calculate new corner positions
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+
+		if (corner.border) {
+			newCorners[i] = corner.position;
+		} else {
+			var newPos = Vector.zero();
+
+			for (var k = 0; k < corner.touches.length; k++) {
+				var neighbor = corner.touches[k];
+				newPos = newPos.add(neighbor.position);
+			}
+
+			newPos = newPos.divide(corner.touches.length);
+			newCorners[i] = newPos;
+		}
+	}
+
+	// Assign new corner positions
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+		corner.position = newCorners[i];
+	}
+
+	// Recompute edge midpoints
+	for (var j = 0; j < this.edges.length; j++) {
+		var edge = this.edges[j];
+
+		if (edge.v0 && edge.v1) {
+			edge.midpoint = Vector.midpoint(edge.v0.position, edge.v1.position);
+		}
+	}
+
+	// Resort the corners into clockwise ordered corners
+	for (var i = 0; i <this.centers.length; i++) {
+		var center = this.centers[i];
+		var comp = Util.comparePolyPoints(center);
+		center.corners.sort(comp);
+  	}
+}
+
+//------------------------------------------------------------------------------
 
 Map.prototype.generatePolygons = function() {
 
@@ -60,6 +117,8 @@ Map.prototype.generatePolygons = function() {
 	this.centers = diagram.centers;
 	this.corners = diagram.corners;
 	this.edges = diagram.edges;
+
+	this.improveCorners();
 }
 //------------------------------------------------------------------------------
 // Helper function for the island shape functions
@@ -91,7 +150,7 @@ Map.prototype.perlinIslandShape = function(pos) {
 Map.prototype.prelinLandShape = function(pos) {
 	// Tuneable parameters
 	var scaleFactor = 3;
-		var threshold = 0.55;
+		var threshold = 0.5;
 
 	var height1 = noise.perlin2(pos.x / this.width * scaleFactor,
 								pos.y / this.height * scaleFactor);
@@ -107,19 +166,89 @@ Map.prototype.prelinLandShape = function(pos) {
 
 //------------------------------------------------------------------------------
 
-Map.prototype.generateLandShape = function() {
+Map.prototype.assignOceanCoastAndLand = function() {
+
+	// Assign corner type water
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+		corner.water = !this.prelinLandShape(corner.position);
+		corner.ocean = false;
+	}
+
+	var queue = [];
 
 	for (var i = 0; i < this.centers.length; i++) {
 		var center = this.centers[i];
-		center.water = !this.perlinIslandShape(center.position);
+
+		var numWater = 0;
+		for (var k = 0; k < center.corners.length; k++) {
+			var corner = center.corners[k];
+
+			if (corner.border) {
+				center.border = true;
+				center.ocean = true;
+				corner.water = true;
+				queue.push(center);
+			}
+			if (corner.water) {
+				numWater += 1;
+			}
+		}
+
+		center.water = (center.ocean ||
+			 numWater >= center.corners.length * this.lakeThreshold);
+		center.ocean = false;
 	}
-}
 
-//------------------------------------------------------------------------------
+	// Flood fill and assign ocean's
+	while (queue.length > 0) {
+		var center = queue.shift();
+		for (var j = 0; j < center.neighbors.length; j++) {
+			var neighbor = center.neighbors[j];
+			if (neighbor.water && !neighbor.ocean) {
+				neighbor.ocean = true;
+				queue.push(neighbor);
+			}
+		}
+	}
 
-Map.prototype.assignOceanCoastAndLand = function() {
+	// Set the polygon attribute coast based on its neighbors
+	// If it has at least one ocean and at least one land neighbor
+	// Then is is a coastal polygon
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+		var numOcean = 0;
+		var numLand = 0;
+		for (var k = 0; k < center.neighbors.length; k++) {
+			var neighbor = center.neighbors[k];
+			numOcean += neighbor.ocean;
+			numLand += !neighbor.water;
+		}
 
+		center.coast = numOcean > 0 && numLand > 0;
+	}
 
+	// Set the corner attrubtes based on the computed polygo attributes.
+	// If all polygons connected to this corner are ocean, then it's ocean
+	// If all are land, then it's land, otherwise it is a coast
+	for (var k = 0; k < this.corners.length; k++) {
+		var corner = this.corners[k];
+
+		var numOcean = 0;
+		var numLand = 0;
+
+		for (var i = 0; i < corner.touches.length; i++) {
+			var neighbor = corner.touches[i];
+
+			numOcean += neighbor.ocean;
+			numLand += !neighbor.water;
+		}
+
+		corner.ocean = numOcean == corner.touches.length;
+		corner.coast = numOcean > 0 && numLand  > 0;
+		corner.water = corner.border ||
+			((numLand != corner.touches.length) && !corner.coast);
+	}
 
 }
 
@@ -266,7 +395,11 @@ Map.prototype.drawColor = function(screen) {
 		var center = this.centers[i];
 		var color;
 
-		if (center.water) {
+		if (center.ocean) {
+			color = this.ocean;
+		} else if(center.coast) {
+			color = this.coast; 
+		} else if(center.water) {
 			color = this.water;
 		} else {
 			color = this.land;

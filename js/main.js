@@ -13,7 +13,7 @@ function main() {
   data.height = canvas.height;
   data.width = canvas.width;
 
-  data.numPoints = 2000;
+  data.numPoints = 1000;
   data.pointSeed = 0;
   data.mapSeed = 0;
 

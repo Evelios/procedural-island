@@ -20,6 +20,7 @@ Map.prototype.generateMap = function() {
 
 	this.generatePolygons();
 	this.generateLandShape();
+	this.assignOceanCoastAndLand();
 	this.generateTectonicPlates();
 }
 
@@ -90,7 +91,7 @@ Map.prototype.perlinIslandShape = function(pos) {
 Map.prototype.prelinLandShape = function(pos) {
 	// Tuneable parameters
 	var scaleFactor = 3;
-	var threshold = 0.5;
+		var threshold = 0.55;
 
 	var height1 = noise.perlin2(pos.x / this.width * scaleFactor,
 								pos.y / this.height * scaleFactor);
@@ -110,8 +111,16 @@ Map.prototype.generateLandShape = function() {
 
 	for (var i = 0; i < this.centers.length; i++) {
 		var center = this.centers[i];
-		center.water = !this.prelinLandShape(center.position);
+		center.water = !this.perlinIslandShape(center.position);
 	}
+}
+
+//------------------------------------------------------------------------------
+
+Map.prototype.assignOceanCoastAndLand = function() {
+
+
+
 }
 
 //------------------------------------------------------------------------------
@@ -119,7 +128,7 @@ Map.prototype.generateLandShape = function() {
 Map.prototype.generateTectonicPlates = function() {
 
 	// Tuneable parameters
-	var numPlates = 20;
+	var numPlates = 15;
 	var numRelaxations = 1;
 
 	var platePositions = [];
@@ -273,7 +282,7 @@ Map.prototype.drawColor = function(screen) {
 Map.prototype.drawPlates = function(screen) {
 	for (var i = 0; i < this.plates.centers.length; i++) {
 		var plate = this.plates.centers[i];
-		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
+		var color = Util.hexToRgb(Util.randHexColor(), 0.25);
 
 		// Draw Oceanic and Continental plates
 		// var plateColor;
@@ -285,15 +294,18 @@ Map.prototype.drawPlates = function(screen) {
 		// this.drawCell(plate, screen, plateColor)
 
 
-		// for (var j = 0; j < plate.tiles.length; j++) {
-		// 	var tile = plate.tiles[j];
-		// 	this.drawCell(tile, screen, color);
-		// }
+		for (var j = 0; j < plate.tiles.length; j++) {
+			var tile = plate.tiles[j];
+			this.drawCell(tile, screen, color);
+		}
 
 		var arrow = plate.position.add(plate.direction.multiply(50));
 		// Draw.line(screen, plate.position, arrow, 'black', 3);
 		// Draw.point(screen, plate.position, 'red');
 	}
+}
+
+Map.prototype.drawPlateBoundaries = function(screen) {
 
 	for (var i = 0; i < this.plates.edges.length; i++) {
 		var edge = this.plates.edges[i];

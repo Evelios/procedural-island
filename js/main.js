@@ -8,11 +8,12 @@ function main() {
   div.appendChild(canvas);
 
   var size = 500;
-  canvas.height = canvas.width = 500;
+  canvas.height = 400;
+  canvas.width = 800;
   data.height = canvas.height;
   data.width = canvas.width;
 
-  data.numPoints = 500;
+  data.numPoints = 2000;
   data.pointSeed = 0;
   data.mapSeed = 0;
 
@@ -29,7 +30,7 @@ function main() {
 }
 
 function generate() {
-  
+
   data.map = new Map(data.width, data.height, data.numPoints);
   drawMap();
 }
@@ -40,6 +41,10 @@ function drawMap() {
 
 function drawPlates() {
   data.map.drawPlates(data.screen);
+}
+
+function drawPlateBoundaries() {
+  data.map.drawPlateBoundaries(data.screen);
 }
 
 function drawDiagram() {

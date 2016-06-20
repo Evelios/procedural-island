@@ -23,9 +23,10 @@ Array.prototype.pushNew = function(obj) {
 }
 
 //------------------------------------------------------------------------------
+// http://stackoverflow.com/questions/1374126/how-to-extend-an-existing-javascript-array-with-another-array
 
 Array.prototype.extend = function(arr) {
-  Array.push.apply(this, arr);
+  Array.prototype.push.apply(this, arr);
 }
 
 //------------------------------------------------------------------------------

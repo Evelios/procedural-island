@@ -10,10 +10,17 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 
 	noise.seed(this.mseed);
 
+	// Land and biome tiles
 	this.water = '#66B2FF';
 	this.land = '#99CC99';
 	this.coast = '#EBE0C0';
 	this.ocean = '#0066CC';
+
+	// Geo Provences
+	this.oceanCrust = '#99CCFF';
+	this.craton = '#FF99FF';
+	this.orogen = '#66FFB2';
+	this.basin = '#9999FF';
 
 	this.generateMap();
 }
@@ -26,7 +33,7 @@ Map.prototype.generateMap = function() {
 
 	this.assignOceanCoastAndLand();
 
-	// this.generateTectonicPlates();
+	this.generateTectonicPlates();
 }
 
 //------------------------------------------------------------------------------
@@ -257,7 +264,7 @@ Map.prototype.assignOceanCoastAndLand = function() {
 Map.prototype.generateTectonicPlates = function() {
 
 	// Tuneable parameters
-	var numPlates = 15;
+	var numPlates = 20;
 	var numRelaxations = 1;
 
 	var platePositions = [];
@@ -336,6 +343,11 @@ Map.prototype.generateTectonicPlates = function() {
 	}
 
 	// Determine the motion at the plate edge
+	// assigns boundaryType
+	// Value range of 0 - 2
+	// 0 : convergent
+	// 1 : transform
+	// 2 : divergent
 	for (var i = 0; i < this.plates.edges.length; i++) {
 		var edge = this.plates.edges[i];
 		if (!edge.d1) {
@@ -373,6 +385,71 @@ Map.prototype.generateTectonicPlates = function() {
 			edge.boundaryType = boundary;
 		}
 	}
+
+	this.boundaries = [];
+
+	// Collect Boundaries
+	for (var i = 0; i < this.plates.edges.length; i++) {
+		var edge = this.plates.edges[i];
+
+		if (edge.boundaryType) {
+			var boundary = {
+				p1 : edge.v0.position,
+				p2 : edge.v1.position,
+				type : ''
+			};
+
+			// Convergent Boundary
+			if (edge.boundaryType < 0.6) {
+				boundary.type = 'convergent';
+			} // Divergent Boundary
+			else if (edge.boundaryType > 1.4) {
+				boundary.type = 'divergent';
+			} // transform Boundary
+			else {
+				boundary.type = 'transform';
+			}
+			this.boundaries.push(boundary);
+		}
+	}
+
+	// Assign Geological Provence: craton, orogen, basin, ocean
+	// By default ocean is ocean and not ocean (including lakes) is craton
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+
+		if (center.ocean) {
+			center.geoProvence = 'ocean';
+			continue;
+		} else {
+			center.geoProvence = 'craton';
+		}
+
+		for (var k = 0; k < this.boundaries.length; k++) {
+			var boundary = this.boundaries[k];
+
+			var distToBoundary = Vector.distToSeg(center.position,
+																						boundary.p1, boundary.p2);
+			var distToEndpoint = Math.min(
+				Vector.distance(center.position, boundary.p1),
+				Vector.distance(center.position, boundary.p2) );
+
+			var orogenDistance = 50;
+			var basonDistance = 70;
+
+			if (boundary.type == 'convergent') {
+				if (distToBoundary < orogenDistance) {
+					center.geoProvence = 'orogen';
+				} else if (!center.coast && distToBoundary < basonDistance &&
+					distToEndpoint > basonDistance / 2) {
+					center.geoProvence = 'basin';
+				}
+			}
+
+		}
+	}
+
+	// Assign Boundaries
 }
 
 //------------------------------------------------------------------------------
@@ -398,7 +475,7 @@ Map.prototype.drawColor = function(screen) {
 		if (center.ocean) {
 			color = this.ocean;
 		} else if(center.coast) {
-			color = this.coast; 
+			color = this.coast;
 		} else if(center.water) {
 			color = this.water;
 		} else {
@@ -415,7 +492,7 @@ Map.prototype.drawColor = function(screen) {
 Map.prototype.drawPlates = function(screen) {
 	for (var i = 0; i < this.plates.centers.length; i++) {
 		var plate = this.plates.centers[i];
-		var color = Util.hexToRgb(Util.randHexColor(), 0.25);
+		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
 
 		// Draw Oceanic and Continental plates
 		// var plateColor;
@@ -434,6 +511,26 @@ Map.prototype.drawPlates = function(screen) {
 
 		var arrow = plate.position.add(plate.direction.multiply(50));
 		// Draw.line(screen, plate.position, arrow, 'black', 3);
+		// Draw.point(screen, plate.position, 'red');
+	}
+}
+
+Map.prototype.drawPlateTypes = function(screen) {
+	for (var i = 0; i < this.plates.centers.length; i++) {
+		var plate = this.plates.centers[i];
+		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
+
+		// Draw Oceanic and Continental plates
+		var plateColor;
+		if (plate.plateType < 0.5) {
+			plateColor = Util.hexToRgb(this.water, 0.5);
+		} else {
+			plateColor = Util.hexToRgb(this.land, 0.5);
+		}
+		this.drawCell(plate, screen, plateColor)
+
+		var arrow = plate.position.add(plate.direction.multiply(50));
+		Draw.arrow(screen, plate.position, arrow, 'black', 3);
 		// Draw.point(screen, plate.position, 'red');
 	}
 }
@@ -464,6 +561,29 @@ Map.prototype.drawPlateBoundaries = function(screen) {
 
 		// Draw.point(screen, edge.midpoint, 'red');
 	}
+}
+
+Map.prototype.drawGeoProvences = function(screen) {
+
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+
+		if (center.geoProvence == 'ocean') {
+			color = this.oceanCrust;
+		} else if (center.geoProvence == 'craton') {
+			color = this.craton;
+		} else if (center.geoProvence == 'orogen') {
+			color = this.orogen;
+		} else if (center.geoProvence == 'basin') {
+			color = this.basin;
+		} else {
+			color = 'black';
+		}
+
+		color = Util.hexToRgb(color, 0.5);
+
+		this.drawCell(center, screen, color)
+ 	}
 }
 
 //------------------------------------------------------------------------------

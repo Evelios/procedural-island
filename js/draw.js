@@ -28,6 +28,7 @@ Draw.line = function(screen, p1, p2, color, width) {
 	width = width || 1;
 
 	Draw.setStroke(screen, color);
+	Draw.setFill(screen, color);
 
 	screen.beginPath();
 	screen.moveTo(p1.x, p1.y);
@@ -38,6 +39,30 @@ Draw.line = function(screen, p1, p2, color, width) {
 	}
 
 	screen.stroke();
+}
+
+// http://stackoverflow.com/questions/16025326/html-5-canvas-complete-arrowhead
+Draw.arrow = function(screen, p1, p2, color, width) {
+
+	Draw.line(screen, p1, p2, color, width);
+
+	var radians=Math.atan((p2.y - p1.y) / (p2.x - p1.x));
+	radians += ((p2.x >= p1.x) ? 90:-90) * Math.PI / 180;
+
+	Draw.arrowHead(screen, p2, radians);
+}
+
+Draw.arrowHead = function(screen, p, radians) {
+	screen.save();
+  screen.beginPath();
+  screen.translate(p.x,p.y);
+  screen.rotate(radians);
+  screen.moveTo(0,0);
+  screen.lineTo(5,20);
+  screen.lineTo(-5,20);
+  screen.closePath();
+  screen.restore();
+  screen.fill();
 }
 
 Draw.rect = function(screen, position, size, color, filled) {

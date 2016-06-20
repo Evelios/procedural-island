@@ -75,7 +75,27 @@ Vector.angle = function(a, b) {
 }
 
 Vector.distance = function(a, b) {
+  return Math.sqrt(Vector.dist2(a, b));
+}
+
+Vector.dist2 = function(a, b) {
   var dx = a.x - b.x;
   var dy = a.y - b.y;
-  return Math.sqrt(dx*dx + dy*dy);
+  return dx*dx + dy*dy;
+}
+
+// Distance of a point to a line segment squared
+// http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
+Vector.distToSegSquared = function(p, v, w) {
+  var l = Vector.dist2(v, w);
+  if (l == 0) return Vector.dist2(p, v);
+  var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l;
+  t = Math.max(0, Math.min(1, t));
+  return Vector.dist2(p, new Vector(v.x + t * (w.x - v.x),
+                                    v.y + t * (w.y - v.y) ));
+}
+
+// Distance of a point to a line segment
+Vector.distToSeg = function(p, v, w) {
+  return Math.sqrt(Vector.distToSegSquared(p, v, w));
 }

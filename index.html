@@ -12,6 +12,7 @@
     <script src="js/util.js"></script>
     <script src="js/lib/rhill-voronoi-core.js"></script>
     <script src="js/lib/perlin.js"></script>
+    <script src="js/lib/seedrandom.js"></script>
     <script src="js/main.js"></script>
 
   </head>
@@ -19,9 +20,10 @@
 
   <div class='wrapper'>
 
-    <div class='buttons'>
-      <button onclick='generate()'>Generate</button></br>
-      Seed: <input type="number" name="name" value=""></br>
+    <div id='form' class='buttons'>
+      <button onclick='generate()'>Generate</button><button onclick='generateRandom()'>Generate Random</button></br>
+      Point Seed: <input id='pSeed' type="Number" name="pSeed" placeholder="Point Seed">
+      Map Seed: <input id='mSeed' type="Number" name="mSeed" placeholder="Map Seed"></br>
 
       <button onclick='drawMap()'>Draw Map</button>
       <button onclick='drawDiagram()'>Draw Diagram</button>

@@ -5,10 +5,11 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 	this.width = width;
 	this.height = height;
 	this.numPoints = numPoints;
-	this.pSeed = pointSeed;
-	this.mseed = mapSeed || Math.random();
+	this.mSeed = mapSeed || Math.random();
+	this.pSeed = pointSeed || Math.random();
 
-	noise.seed(this.mseed);
+	noise.seed(this.mSeed);
+	Math.seedrandom(this.pSeed);
 
 	// Land and biome tiles
 	this.water = '#66B2FF';
@@ -425,27 +426,28 @@ Map.prototype.generateTectonicPlates = function() {
 			center.geoProvence = 'craton';
 		}
 
-		for (var k = 0; k < this.boundaries.length; k++) {
-			var boundary = this.boundaries[k];
+		if (center.geoProvence == 'craton') { // Avoids reasigning of provences
+			for (var k = 0; k < this.boundaries.length; k++) {
+				var boundary = this.boundaries[k];
 
-			var distToBoundary = Vector.distToSeg(center.position,
-																						boundary.p1, boundary.p2);
-			var distToEndpoint = Math.min(
-				Vector.distance(center.position, boundary.p1),
-				Vector.distance(center.position, boundary.p2) );
+				var distToBoundary = Vector.distToSeg(center.position,
+					boundary.p1, boundary.p2);
+				var distToEndpoint = Math.min(
+					Vector.distance(center.position, boundary.p1),
+					Vector.distance(center.position, boundary.p2) );
 
-			var orogenDistance = 50;
-			var basonDistance = 70;
+				var orogenDistance = 50;
+				var basonDistance = 70;
 
-			if (boundary.type == 'convergent') {
-				if (distToBoundary < orogenDistance) {
-					center.geoProvence = 'orogen';
-				} else if (!center.coast && distToBoundary < basonDistance &&
-					distToEndpoint > basonDistance / 2) {
-					center.geoProvence = 'basin';
+				if (boundary.type == 'convergent') {
+					if (distToBoundary < orogenDistance) {
+						center.geoProvence = 'orogen';
+						break;
+					} else if (!center.coast && distToBoundary < basonDistance) {
+						center.geoProvence = 'basin';
+					}
 				}
 			}
-
 		}
 	}
 

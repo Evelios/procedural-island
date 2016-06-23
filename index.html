@@ -20,17 +20,27 @@
 
   <div class='wrapper'>
 
-    <div id='form' class='buttons'>
+    <div class='buttons'>
       <button onclick='generate()'>Generate</button><button onclick='generateRandom()'>Generate Random</button></br>
-      Point Seed: <input id='pSeed' type="Number" name="pSeed" placeholder="Point Seed">
-      Map Seed: <input id='mSeed' type="Number" name="mSeed" placeholder="Map Seed"></br>
+      <form id='form'>
+        Point Seed: <input id='pointSeed' type="Number" name="pointSeed" placeholder="Point Seed">
+        Map Seed: <input id='mapSeed' type="Number" name="mapSeed" placeholder="Map Seed"></br>
 
-      <button onclick='drawMap()'>Draw Map</button>
+        Daigram: <input type="checkbox" name="diagram" value="false">
+        Plates: <input type="checkbox" name="plates" value="false">
+        Plate Boundaries: <input type="checkbox" name="boundaries" value="false">
+        Plate Types: <input type="checkbox" name="plateTypes" value="false"> </br>
+
+        Biome Map: <input type='radio' name='drawMap' value='biome' checked='checked'>
+        Geological Provinces: <input type='radio' name='drawMap' value='groProvinces'></br>
+      </form>
+
+      <!--button onclick='drawMap()'>Draw Map</button>
       <button onclick='drawDiagram()'>Draw Diagram</button>
       <button onclick='drawPlates()'>Draw Plates</button>
       <button onclick='drawPlateBoundaries()'>Draw Plate Boundaries</button>
-      <button onclick='drawGeoProvences()'>Draw Geo Provences</button>
-      <button onclick='drawPlateTypes()'>Draw Plate Types</button>
+      <button onclick='drawGeoProvinces()'>Draw Geo Provinces</button>
+      <button onclick='drawPlateTypes()'>Draw Plate Types</button-->
     </div>
 
     <div id='jsHook' ></div>

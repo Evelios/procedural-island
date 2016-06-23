@@ -1,5 +1,6 @@
 var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 
+	// Tuneable parameters
 	this.lakeThreshold = 0.3; // Fraction of water corners for water polygon
 
 	this.width = width;
@@ -8,6 +9,7 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 	this.mSeed = mapSeed || Math.random();
 	this.pSeed = pointSeed || Math.random();
 
+	// Set seed values for the map
 	noise.seed(this.mSeed);
 	Math.seedrandom(this.pSeed);
 
@@ -27,22 +29,31 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 }
 
 //------------------------------------------------------------------------------
+// Meta function of the map generator, this holds all the sub functions that
+// get called to make the map
 
 Map.prototype.generateMap = function() {
 
-	this.generatePolygons();
+	this.generateTiles();
 
 	this.assignOceanCoastAndLand();
 
 	this.generateTectonicPlates();
+
+	this.assignGeoProvinces();
 }
 
 //------------------------------------------------------------------------------
 // Helper function to generate random points for creating the diagram
+//
+// params:
+// 		length (Number): length of the list to be generated
+//
+// return (list<Vector>): a list of random points of {length}
 
-Map.prototype.generateRandomPoints = function() {
+Map.prototype.generateRandomPoints = function(length) {
 	var points = [];
-	for (var i = 0; i < this.numPoints; i++) {
+	for (var i = 0; i < length; i++) {
 		var x = Util.randIntInclusive(0, this.width);
 		var y = Util.randIntInclusive(0, this.height);
 		var point = new Vector(x, y);
@@ -52,7 +63,15 @@ Map.prototype.generateRandomPoints = function() {
 }
 
 //------------------------------------------------------------------------------
-// Helper function to create a diagram
+// Helper function to create a voronoi diagram from input points
+//
+// params:
+//		points (list<Vector>): list of points to generate a voronoi diagram
+//		relaxations (Number): number Lloyd ralaxations to preform on the
+//			voronoi diagram
+//
+// return (Diagram): PAN connected voronoi diagram form the input points that
+//		have been relaxed {relaxations} times
 
 Map.prototype.generateDiagram = function(points, relaxations) {
 
@@ -63,8 +82,10 @@ Map.prototype.generateDiagram = function(points, relaxations) {
 
 //------------------------------------------------------------------------------
 // Helper function to create diagram
+//
 // Lloyd relaxation helped to create uniformity among polygon centers,
-// this creates uniformity among polygon corners
+// This function creates uniformity among polygon corners by setting the corners
+// to the average of their neighbors
 // This breakes the voronoi diagram properties
 
 Map.prototype.improveCorners = function() {
@@ -114,13 +135,16 @@ Map.prototype.improveCorners = function() {
 }
 
 //------------------------------------------------------------------------------
+// Generates the map tiles that are to be used as the basis of the map
+// The tiles are PAN connected relaxed voronoi diagram with relaxes corners
 
-Map.prototype.generatePolygons = function() {
+Map.prototype.generateTiles = function() {
 
 	// Tuneable parameter
 	var relaxations = 4;
 
-	var diagram = this.generateDiagram(this.generateRandomPoints(), relaxations);
+	var points = this.generateRandomPoints(this.numPoints);
+	var diagram = this.generateDiagram(points, relaxations);
 
 	this.centers = diagram.centers;
 	this.corners = diagram.corners;
@@ -130,6 +154,16 @@ Map.prototype.generatePolygons = function() {
 }
 //------------------------------------------------------------------------------
 // Helper function for the island shape functions
+//
+// This function returns the distance away from the center of the map creating
+// a gradient falloff function from the center of the map
+//
+// params:
+//		pos (Vector): the location to be check for the gradient value
+//
+// return: (Number): The distance from the edge of the map
+
+// This function needs fixing? The value is range limited to 0-1
 
 Map.prototype.gradient = function(pos) {
   var center = new Vector(this.width / 2, this.height / 2);
@@ -173,18 +207,25 @@ Map.prototype.prelinLandShape = function(pos) {
 }
 
 //------------------------------------------------------------------------------
+// This function assigns the values of ocean, water (!land), and coast to
+// center tiles and corner points. Ocean tiles are water tiles that are
+// connected to the border of the map. Coast tiles are tiles that have a
+// neighbors that are ocean tiles and land tiles
+
 
 Map.prototype.assignOceanCoastAndLand = function() {
 
 	// Assign corner type water
 	for (var i = 0; i < this.corners.length; i++) {
 		var corner = this.corners[i];
-		corner.water = !this.prelinLandShape(corner.position);
+		corner.water = !this.perlinIslandShape(corner.position);
 		corner.ocean = false;
 	}
 
 	var queue = [];
 
+	// Assign border corners and centers to ocean tiles
+	// and add the center tiles to the queue for ocean flood filling
 	for (var i = 0; i < this.centers.length; i++) {
 		var center = this.centers[i];
 
@@ -208,7 +249,7 @@ Map.prototype.assignOceanCoastAndLand = function() {
 		center.ocean = false;
 	}
 
-	// Flood fill and assign ocean's
+	// Flood fill and assign ocean value to center positions
 	while (queue.length > 0) {
 		var center = queue.shift();
 		for (var j = 0; j < center.neighbors.length; j++) {
@@ -261,6 +302,15 @@ Map.prototype.assignOceanCoastAndLand = function() {
 }
 
 //------------------------------------------------------------------------------
+// Creates the plates that are used for calculating the geological provinces
+// Plates are another voronoi diagram layed on top of the polygon tile map
+// Plates can be either oceanic or continental plates depending on whichever
+// majority of tiles that it encompases. Plate movement direction is calculated
+// by having all plates move towards continiental plates and away from oceanic
+// plates. The boundary type is then determined by the relative direction of
+// the plates. There are three boundary types, convergent, divergent, and
+// transform.
+
 
 Map.prototype.generateTectonicPlates = function() {
 
@@ -268,16 +318,10 @@ Map.prototype.generateTectonicPlates = function() {
 	var numPlates = 20;
 	var numRelaxations = 1;
 
-	var platePositions = [];
-
-	// Calculate the starting plate positions
-	while(numPlates--) {
-		var plate = this.centers[Util.randInt(0, this.centers.length)];
-		platePositions.pushNew(plate.position);
-	}
+	var points = this.generateRandomPoints(numPlates);
 
 	// Create the voronoi diagram of the points
-	this.plates = this.generateDiagram(platePositions, numRelaxations);
+	this.plates = this.generateDiagram(points, numRelaxations);
 
 	for (var i = 0; i < this.plates.centers.length; i++) {
 		var plate = this.plates.centers[i];
@@ -413,7 +457,11 @@ Map.prototype.generateTectonicPlates = function() {
 			this.boundaries.push(boundary);
 		}
 	}
+}
 
+//------------------------------------------------------------------------------
+
+Map.prototype.assignGeoProvinces = function() {
 	// Assign Geological Provence: craton, orogen, basin, ocean
 	// By default ocean is ocean and not ocean (including lakes) is craton
 	for (var i = 0; i < this.centers.length; i++) {
@@ -450,8 +498,6 @@ Map.prototype.generateTectonicPlates = function() {
 			}
 		}
 	}
-
-	// Assign Boundaries
 }
 
 //------------------------------------------------------------------------------

@@ -25,33 +25,106 @@ function main() {
   screen.fillStyle = backgroundColor;
   screen.fillRect(0, 0, canvas.width, canvas.height);
 
+  setUp();
+
   generateRandom();
-  drawMap();
 }
+
+function setUp() {
+  var form = document.getElementById('form');
+  var elements = form.elements;
+
+  for ( var i = 0; i < form.elements.length; i++ ) {
+    var e = elements[i];
+    if (e.name != 'pointSeed' || e.name != 'mapSeed') {
+      elements[i].onchange = function() {
+        update();
+      }
+    }
+  }
+}
+
+function update() {
+  readForm();
+  render();
+}
+
+function readForm() {
+  var form = document.getElementById('form');
+  var elements = form.elements;
+
+  for ( var i = 0; i < form.elements.length; i++ ) {
+    var e = form.elements[i];
+    var value = e.type == 'checkbox' ? e.checked : e.value;
+    var name = e.name;
+
+    if (e.type == 'radio') {
+      if (e.checked) {
+        data[name] = value;
+      }
+    } else {
+      data[name] = value;
+    }
+
+  }
+}
+
+// Generation Functions
 
 function generateRandom() {
 
-  var pSeed = Util.randInt(0, Number.MAX_SAFE_INTEGER);
-  document.getElementById('pSeed').value = pSeed;
+  var pointSeed = Util.randInt(0, Number.MAX_SAFE_INTEGER);
+  document.getElementById('pointSeed').value = pointSeed;
 
-  var mSeed = Util.randInt(0, Number.MAX_SAFE_INTEGER);
-  document.getElementById('mSeed').value = mSeed;
-  
-  createMap(pSeed, mSeed);
+  var mapSeed = Util.randInt(0, Number.MAX_SAFE_INTEGER);
+  document.getElementById('mapSeed').value = mapSeed;
+
+  createMap(pointSeed, mapSeed);
 }
 
 function generate() {
 
-  var pSeed = parseInt(document.getElementById('pSeed').value) || 0;
-  var mSeed = parseInt(document.getElementById('mSeed').value) || 0;
+  var pointSeed = parseInt(document.getElementById('pointSeed').value) || 0;
+  var mapSeed = parseInt(document.getElementById('mapSeed').value) || 0;
 
-  createMap(pSeed, mSeed);  
+  createMap(pointSeed, mapSeed);
 }
 
-function createMap(pSeed, mSeed) {
-  data.map = new Map(data.width, data.height, data.numPoints, pSeed, mSeed);
-  drawMap();
+function createMap(pointSeed, mapSeed) {
+  data.map = new Map(data.width, data.height, data.numPoints, pointSeed, mapSeed);
+  update();
 }
+
+// Render Functions
+
+function render() {
+
+  if (data.drawMap == 'biome') {
+    drawMap();
+  } else if (data.drawMap == 'groProvinces') {
+    drawMap();
+    drawGeoProvinces();
+  } else {
+    print('something went wrong');
+  }
+
+  if (data.diagram) {
+    drawDiagram();
+  }
+  if (data.plates) {
+    drawPlates();
+  }
+  if (data.boundaries) {
+    drawPlateBoundaries();
+  }
+  if (data.plateTypes) {
+    drawPlateTypes();
+  }
+}
+
+// Drawing Functions
+
+
 
 function drawMap() {
   data.map.drawColor(data.screen);
@@ -65,7 +138,7 @@ function drawPlateBoundaries() {
   data.map.drawPlateBoundaries(data.screen);
 }
 
-function drawGeoProvences() {
+function drawGeoProvinces() {
   data.map.drawGeoProvences(data.screen);
 }
 

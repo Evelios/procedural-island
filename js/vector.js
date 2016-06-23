@@ -24,6 +24,7 @@ Vector.zero = function() {
 
 // Basic Math Functions
 
+
 Vector.prototype.add = function(other) {
   return new Vector(this.x + other.x, this.y + other.y);
 };
@@ -40,6 +41,8 @@ Vector.prototype.divide = function(scalar) {
   return new Vector(this.x / scalar, this.y / scalar);
 }
 
+
+// Returns a vector that has been rotated by ammount in radians
 Vector.prototype.rotate = function(radians) {
   var c = Math.cos(radians);
   var s = Math.cos(radians);
@@ -78,6 +81,7 @@ Vector.distance = function(a, b) {
   return Math.sqrt(Vector.dist2(a, b));
 }
 
+// Distance Squared
 Vector.dist2 = function(a, b) {
   var dx = a.x - b.x;
   var dy = a.y - b.y;

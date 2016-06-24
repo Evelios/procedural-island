@@ -13,23 +13,6 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 	noise.seed(this.mSeed);
 	Math.seedrandom(this.pSeed);
 
-	// Land and biome tiles
-	this.water = '#66B2FF';
-	this.land = '#99CC99';
-	this.mountain = '#CCFFFF';
-	this.coast = '#EBE0C0';
-	this.ocean = '#0066CC';
-
-	// Geo Provinces
-	this.oceanCrust = '#99CCFF';
-	this.craton = '#FF99FF';
-	this.orogen = '#66FFB2';
-	this.basin = '#9999FF';
-
-	this.black = '#000000';
-	this.white = '#FFFFFF';
-	this.gray = '#A0A0A0';
-
 	this.generateMap();
 }
 
@@ -56,6 +39,9 @@ Map.prototype.generateMap = function() {
 	// Assign Moisture
   this.calculateDownslopes();
   this.createRivers();
+	this.assignCornerMoisture();
+	this.redistributeMoisture(this.landCorners());
+	this.assignPolygonMoisture();
 }
 
 //------------------------------------------------------------------------------
@@ -731,205 +717,73 @@ Map.prototype.createRivers = function() {
 }
 
 //------------------------------------------------------------------------------
-//
-//        DDDD     RRRR      AAA     W         W
-//        D  DD    R   R    A   A    W         W
-//        D   DD   RRRR     AAAAA     WW  W  WW
-//        D  DD    R  RR   AA   AA     W WWW W
-//        DDDD     R   R   A     A     WW   WW
-//
-//------------------------------------------------------------------------------
 
+Map.prototype.assignCornerMoisture = function() {
 
-Map.prototype.drawCell = function(cell, screen, color) {
-	var points = []
-	for (var i = 0; i < cell.corners.length; i++) {
-		points.push(cell.corners[i].position);
-	}
-	Draw.polygon(screen, points, color, true);
+  // Fresh water
+	var queue = []
+
+  for (var i = 0; i < this.corners.length; i++) {
+    var corner = this.corners[i];
+
+    if ((corner.water || corner.river > 0) && !corner.ocean) {
+      corner.moisture = corner.river > 0 ?
+        Math.min(3.0, (2.0 * corner.river)) : 1.0;
+      queue.push(corner);
+    } else {
+      corner.moisture = 0.0;
+    }
+  }
+
+  while(queue.length > 0) {
+    var corner = queue.shift();
+    var newMoisture;
+
+    for (var i = 0; i < corner.adjacent.length; i++) {
+      var adj = corner.adjacent[i];
+      newMoisture = corner.moisture * 0.9;
+      if (newMoisture > adj.moisture) {
+        adj.moisture = newMoisture;
+        queue.push(adj);
+      }
+    }
+  }
+
+  // Salt water
+  for (var i = 0; i < this.corners.length; i++) {
+    var corner = this.corners[i];
+    if (corner.ocean || corner.coast) {
+      corner.moisture = 1.0;
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
+// Redestribute moisture to be evenly destributed
 
-Map.prototype.drawColor = function(screen) {
-	screen.fillStyle = this.water;
- 	screen.fillRect(0, 0, this.width, this.height);
-
-	for (var i = 0; i < this.centers.length; i++) {
-		var center = this.centers[i];
-		var color;
-
-		if (center.ocean) {
-			color = this.ocean;
-		} else if(center.coast) {
-			color = this.coast;
-		} else if(center.water) {
-			color = this.water;
-		} else {
-			color = Util.lerpColor(this.land, this.mountain, center.elevation);
-		}
-
-		this.drawCell(center, screen, color);
-	}
-
-	for (var k = 0; k < this.edges.length; k++) {
-		var edge = this.edges[k];
-
-		if (edge.river) {
-			Draw.line(screen, edge.v0.position, edge.v1.position,
-				this.water, Math.sqrt(edge.river));
-		}
-	}
+Map.prototype.redistributeMoisture = function(locations) {
+  locations.sort(Util.propComp('moisture'));
+  for (var i = 0, l = locations.length; i < l; i++) {
+    locations[i].moisture = i / (l - 1);
+  }
 }
 
 //------------------------------------------------------------------------------
-// Draw tectonic plates
+// Polygon moisture is just the average of the moistures at the corners
 
-Map.prototype.drawPlates = function(screen) {
-	for (var i = 0; i < this.plates.centers.length; i++) {
-		var plate = this.plates.centers[i];
-		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
+Map.prototype.assignPolygonMoisture = function() {
+  for (var i = 0; i < this.centers.length; i++) {
+    var center = this.centers[i];
 
-		// Draw Oceanic and Continental plates
-		// var plateColor;
-		// if (plate.plateType < 0.5) {
-		// 	plateColor = Util.hexToRgb(this.water, 0.5);
-		// } else {
-		// 	plateColor = Util.hexToRgb(this.land, 0.5);
-		// }
-		// this.drawCell(plate, screen, plateColor)
+    var sumMoisture = 0.0;
+    for (var k = 0; k < center.corners.length; k++) {
+      var corner = center.corners[k];
+      if (corner.moisture > 1.0) {
+        corner.moisture = 1.0;
+      }
+      sumMoisture += corner.moisture;
+    }
 
-
-		for (var j = 0; j < plate.tiles.length; j++) {
-			var tile = plate.tiles[j];
-			this.drawCell(tile, screen, color);
-		}
-
-		var arrow = plate.position.add(plate.direction.multiply(50));
-		// Draw.line(screen, plate.position, arrow, 'black', 3);
-		// Draw.point(screen, plate.position, 'red');
-	}
-}
-
-Map.prototype.drawPlateTypes = function(screen) {
-	for (var i = 0; i < this.plates.centers.length; i++) {
-		var plate = this.plates.centers[i];
-		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
-
-		// Draw Oceanic and Continental plates
-		var plateColor;
-		if (plate.plateType < 0.5) {
-			plateColor = Util.hexToRgb(this.water, 0.5);
-		} else {
-			plateColor = Util.hexToRgb(this.land, 0.5);
-		}
-		this.drawCell(plate, screen, plateColor)
-
-		var arrow = plate.position.add(plate.direction.multiply(50));
-		Draw.arrow(screen, plate.position, arrow, 'black', 3);
-		// Draw.point(screen, plate.position, 'red');
-	}
-}
-
-Map.prototype.drawPlateBoundaries = function(screen) {
-
-	for (var i = 0; i < this.plates.edges.length; i++) {
-		var edge = this.plates.edges[i];
-
-		var arrow = edge.midpoint.add(edge.direction.multiply(30));
-		// Draw.line(screen, edge.midpoint, arrow, 'yellow', 3);
-
-		// if (edge.direction.magnitude() < 1) {
-		// 	Draw.line(screen, edge.v0.position, edge.v1.position, 'yellow', 3);
-		// }
-
-		if (edge.boundaryType != null) {
-			var edgeColor;
-			if (edge.boundaryType < 1.0) {
-				edgeColor = Util.lerpColor('#FF0000', '#00FF00', edge.boundaryType);
-			} else {
-				edgeColor = Util.lerpColor('#00FF00', '#0000FF', edge.boundaryType - 1);
-			}
-			Draw.line(screen, edge.v0.position, edge.v1.position, edgeColor, 3);
-		} else {
-			Draw.line(screen, edge.v0.position, edge.v1.position, this.gray, 3);
-		}
-
-		// Draw.point(screen, edge.midpoint, 'red');
-	}
-}
-
-Map.prototype.drawGeoProvinces = function(screen) {
-
-	for (var i = 0; i < this.centers.length; i++) {
-		var center = this.centers[i];
-
-		if (center.geoProvince == 'ocean') {
-			color = this.oceanCrust;
-		} else if (center.geoProvince == 'craton') {
-			color = this.craton;
-		} else if (center.geoProvince == 'orogen') {
-			color = this.orogen;
-		} else if (center.geoProvince == 'basin') {
-			color = this.basin;
-		} else {
-			color = 'black';
-		}
-
-		color = Util.hexToRgb(color, 0.5);
-
-		this.drawCell(center, screen, color)
- 	}
-}
-
-Map.prototype.drawElevation = function(screen) {
-	for (var i = 0; i < this.centers.length; i++) {
-		var center = this.centers[i];
-		var color = Util.lerpColor(this.black, this.white, center.elevation);
-		this.drawCell(center, screen, color);
-	}
-
-	for (var i = 0; i < this.edges.length; i++) {
-		var edge = this.edges[i];
-		var v0 = edge.v0;
-		var v1 = edge.v1;
-		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
-			Draw.line(screen, v0.position, v1.position, this.gray, 1);
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-
-Map.prototype.drawDiagram = function(screen, delaunay) {
-	// Draw Edges
-	for (var i = 0; i < this.edges.length; i++) {
-		var edge = this.edges[i];
-		var d0 = edge.d0.position;
-		var d1 = edge.d1 ? edge.d1.position : null;
-		var v0 = edge.v0.position;
-		var v1 = edge.v1.position;
-
-		// Draw Voronoi Diagram
-		Draw.line(screen, v0, v1, 'blue');
-
-		if (delaunay && d1) {
-		// Draw Delaunay Diagram
-		Draw.line(screen, d0, d1, 'yellow')
-	  	}
-	}
-
-	// Draw Center Points
-	for (var i = 0; i < this.centers.length; i++) {
-		var center = this.centers[i];
-		var pos = center.position;
-		Draw.point(screen, pos, 'red');
-	}
-
-	// Draw Corners
-	for (var i = 0; i < this.corners; i++) {
-		var corner = this.corners[i]
-		var pos = corner.position;
-		Draw.point(screen, pos, 'green')
-	}
+    center.moisture = sumMoisture / center.corners.length;
+  }
 }

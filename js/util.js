@@ -1,5 +1,3 @@
-var Util = {};
-
 // ********** Development Functions ********************************************
 
 // A quick option for calling the console.log function
@@ -60,6 +58,10 @@ function has(obj, prop) {
 }
 
 //------------------------------------------------------------------------------
+
+var Util = {};
+
+//------------------------------------------------------------------------------
 // Returns a random number between 0 (inclusive) and 1 (exclusive
 Util.rand = function() {
   return Math.random();
@@ -88,6 +90,24 @@ Util.randIntInclusive = function(min, max) {
 // http://www.paulirish.com/2009/random-hex-color-code-snippets/
 Util.randHexColor = function() {
   return '#' + Math.floor(Math.random() * 16777215).toString(16);
+}
+
+//------------------------------------------------------------------------------
+// Not Using This One (But it is an option)
+// http://stackoverflow.com/questions/11142884/fast-way-to-get-the-min-max-values-among-properties-of-object
+//
+// http://stackoverflow.com/questions/27376295/getting-key-with-the-highest-value-from-object
+// Returns the key of the min/max element of the object
+// params:
+//  obj (Object): Javascript object
+// returns (Key): The key of the min/max element of the input object
+
+Util.objMax = function(obj) {
+  return Object.keys(obj).reduce(function(a, b){ return obj[a] > obj[b] ? a : b });
+}
+
+Util.objMin = function(obj) {
+  return Object.keys(obj).reduce(function(a, b){ return obj[a] < obj[b] ? a : b });
 }
 
 //------------------------------------------------------------------------------

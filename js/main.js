@@ -104,6 +104,8 @@ function render() {
   } else if (data.drawMap == 'groProvinces') {
     drawMap();
     drawGeoProvinces();
+  } else if (data.drawMap == 'elevation') {
+    drawElevation();
   } else {
     print('something went wrong');
   }
@@ -124,10 +126,16 @@ function render() {
 
 // Drawing Functions
 
-
-
 function drawMap() {
   data.map.drawColor(data.screen);
+}
+
+function drawGeoProvinces() {
+  data.map.drawGeoProvinces(data.screen);
+}
+
+function drawElevation() {
+  data.map.drawElevation(data.screen);
 }
 
 function drawPlates() {
@@ -138,9 +146,6 @@ function drawPlateBoundaries() {
   data.map.drawPlateBoundaries(data.screen);
 }
 
-function drawGeoProvinces() {
-  data.map.drawGeoProvences(data.screen);
-}
 
 function drawDiagram() {
   data.map.drawDiagram(data.screen);

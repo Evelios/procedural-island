@@ -16,14 +16,19 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 	// Land and biome tiles
 	this.water = '#66B2FF';
 	this.land = '#99CC99';
+	this.mountain = '#CCFFFF';
 	this.coast = '#EBE0C0';
 	this.ocean = '#0066CC';
 
-	// Geo Provences
+	// Geo Provinces
 	this.oceanCrust = '#99CCFF';
 	this.craton = '#FF99FF';
 	this.orogen = '#66FFB2';
 	this.basin = '#9999FF';
+
+	this.black = '#000000';
+	this.white = '#FFFFFF';
+	this.gray = '#A0A0A0';
 
 	this.generateMap();
 }
@@ -34,13 +39,59 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 
 Map.prototype.generateMap = function() {
 
+	// Diagram
 	this.generateTiles();
 
+	// Create Provinces
 	this.assignOceanCoastAndLand();
-
 	this.generateTectonicPlates();
+	this.assignCornerGeoProvinces();
+	this.assignPolygonGeoProvinces();
 
-	this.assignGeoProvinces();
+	// Elevations
+	this.assignCornerElevations();
+	this.redistributeElevations(this.landCorners());
+	this.assignPolygonElevations();
+
+	// Assign Moisture
+  this.calculateDownslopes();
+  this.createRivers();
+}
+
+//------------------------------------------------------------------------------
+// Helper function to get list representations of the map data
+//
+// returns (list<Corners>): All land corners from the diagram
+Map.prototype.landCorners = function() {
+  var locations = [];
+  for (var i = 0; i < this.corners.length; i++) {
+    var corner = this.corners[i];
+    if (!corner.ocean && !corner.coast) {
+      locations.push(corner);
+    }
+  }
+  return locations;
+}
+
+//------------------------------------------------------------------------------
+// Helper function to get the edge that contains the two corner points
+//
+// params:
+//	c1 (Corner): The first possible corner connected to an edge
+//	c2 (Corner): The second possible corner connected to an edge
+//
+// returns (Edge): Returns the edge connected to the two corners,
+// 	otherwise returns null
+
+Map.prototype.edgeLookupFromCorners = function(c1, c2) {
+  var edge;
+  for (var i = 0, l = this.edges.length; i <l; i++) {
+    edge = this.edges[i];
+    if ((edge.v0 == c1 && edge.v1 == c2) || (edge.v1 == c1 && edge.v0 == c2)) {
+      return edge;
+    }
+  }
+  return null;
 }
 
 //------------------------------------------------------------------------------
@@ -444,14 +495,11 @@ Map.prototype.generateTectonicPlates = function() {
 				type : ''
 			};
 
-			// Convergent Boundary
 			if (edge.boundaryType < 0.6) {
 				boundary.type = 'convergent';
-			} // Divergent Boundary
-			else if (edge.boundaryType > 1.4) {
+			} else if (edge.boundaryType > 1.4) {
 				boundary.type = 'divergent';
-			} // transform Boundary
-			else {
+			} else {
 				boundary.type = 'transform';
 			}
 			this.boundaries.push(boundary);
@@ -461,38 +509,38 @@ Map.prototype.generateTectonicPlates = function() {
 
 //------------------------------------------------------------------------------
 
-Map.prototype.assignGeoProvinces = function() {
-	// Assign Geological Provence: craton, orogen, basin, ocean
+Map.prototype.assignCornerGeoProvinces = function() {
+	// Assign Geological Province: craton, orogen, basin, ocean
 	// By default ocean is ocean and not ocean (including lakes) is craton
-	for (var i = 0; i < this.centers.length; i++) {
-		var center = this.centers[i];
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
 
-		if (center.ocean) {
-			center.geoProvence = 'ocean';
+		if (corner.ocean) {
+			corner.geoProvince = 'ocean';
 			continue;
 		} else {
-			center.geoProvence = 'craton';
+			corner.geoProvince = 'craton';
 		}
 
-		if (center.geoProvence == 'craton') { // Avoids reasigning of provences
+		if (corner.geoProvince == 'craton') { // Avoids reasigning of provinces
 			for (var k = 0; k < this.boundaries.length; k++) {
 				var boundary = this.boundaries[k];
 
-				var distToBoundary = Vector.distToSeg(center.position,
+				var distToBoundary = Vector.distToSeg(corner.position,
 					boundary.p1, boundary.p2);
 				var distToEndpoint = Math.min(
-					Vector.distance(center.position, boundary.p1),
-					Vector.distance(center.position, boundary.p2) );
+					Vector.distance(corner.position, boundary.p1),
+					Vector.distance(corner.position, boundary.p2) );
 
 				var orogenDistance = 50;
 				var basonDistance = 70;
 
 				if (boundary.type == 'convergent') {
 					if (distToBoundary < orogenDistance) {
-						center.geoProvence = 'orogen';
+						corner.geoProvince = 'orogen';
 						break;
-					} else if (!center.coast && distToBoundary < basonDistance) {
-						center.geoProvence = 'basin';
+					} else if (!corner.coast && distToBoundary < basonDistance) {
+						corner.geoProvince = 'basin';
 					}
 				}
 			}
@@ -501,6 +549,204 @@ Map.prototype.assignGeoProvinces = function() {
 }
 
 //------------------------------------------------------------------------------
+
+Map.prototype.assignPolygonGeoProvinces = function() {
+	// Polygon is the most common province of all its corners
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+
+		var counts = {};
+
+		for (var k = 0; k < center.corners.length; k++) {
+			var corner = center.corners[k];
+			var province = corner.geoProvince;
+
+			if (!has(counts, province)) {
+				counts[province] = 0;
+			}
+
+			if (!center.ocean || province == 'ocean') {
+				counts[province] += 1;
+			}
+		}
+
+		center.geoProvince = Util.objMax(counts);
+	}
+}
+
+//------------------------------------------------------------------------------
+
+Map.prototype.assignCornerElevations = function() {
+	var queue = [];
+
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+
+		if (corner.border) {
+			corner.elevation = 0.0;
+			queue.push(corner);
+		} else {
+			corner.elevation = Infinity;
+		}
+	}
+
+	// Travere the graph moving away from the border. Increase elevation by small
+	// ammount if tile is a land, and a large ammount if tile is in the orogen.
+	// Elevation does not increase in basins or lakes
+	while(queue.length > 0) {
+		var corner = queue.shift();
+
+		// Used for filling algorithm not to get stuck in infinite loop
+		var epsilon = 0.001;
+		// Small step used for land tiles
+		var delta = 0.1;
+		// Normal step
+		var step = 1.0;
+
+
+		for (var i = 0; i < corner.adjacent.length; i++) {
+			var adj = corner.adjacent[i];
+
+			var newElevation = epsilon + corner.elevation;
+			if (!corner.water && !adj.water && adj.geoProvince != 'basin') {
+				if (adj.geoProvince == 'orogen') {
+					newElevation += step;
+				} else {
+					newElevation += delta;
+				}
+			}
+			// If this point has changed, add it to the queue so that it and its
+			// neighbors can be processed
+			if (newElevation < adj.elevation) {
+				adj.elevation = newElevation;
+				queue.push(adj);
+			}
+		}
+	}
+
+	// Assign elevations to non-land corners
+  for (var i = 0; i < this.corners.length; i++) {
+    var corner = this.corners[i];
+    if (corner.ocean || corner.coast) {
+      corner.elevation = 0.0;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// Redistribute elevations so that lower elevations are more common than higher
+// elevations. Speciffically, we want the elevation X to have frequency (1 - x)
+// To do this we will sort the corners, then set each corner to its desired
+// elevation
+Map.prototype.redistributeElevations = function(locations) {
+  // scaleFactor increases the mountain area so that is is more visible
+  var scaleFactor = 1.1;
+  locations.sort(Util.propComp('elevation'));
+  for (i = 0; i < locations.length; i++) {
+    // Let y(x) be the total area that we want at elevation <= x.
+    // We want the higher elevations to occur less than lower
+    // ones, and set the area to be y(x) = 1 - (1-x)^2.
+    y = i / (locations.length - 1);
+    // Now we have to solve for x, given the known y.
+    //  *  y = 1 - (1-x)^2
+    //  *  y = 1 - (1 - 2x + x^2)
+    //  *  y = 2x - x^2
+    //  *  x^2 - 2x + y = 0
+    // From this we can use the quadratic equation to get:
+    x = Math.sqrt(scaleFactor) - Math.sqrt(scaleFactor*(1 - y));
+    if (x > 1.0) {
+      x = 1.0;
+    }
+
+    locations[i].elevation = x;
+  }
+}
+
+//------------------------------------------------------------------------------
+
+Map.prototype.assignPolygonElevations = function() {
+
+  for (var i = 0; i < this.centers.length; i++) {
+    var center = this.centers[i];
+    var sumElevation = 0.0;
+
+    for (var k = 0; k < center.corners.length; k++) {
+      var corner = center.corners[k];
+      sumElevation += corner.elevation;
+    }
+
+    center.elevation = sumElevation / center.corners.length;
+  }
+}
+
+//------------------------------------------------------------------------------
+// For every corner we calculate its downslope. That is a pointer that
+// refrences to the corner that is at a lower elevation than itself, if there
+// is no downslope point, the pointer points to itself
+
+Map.prototype.calculateDownslopes = function() {
+	for (var i = 0; i < this.corners.length; i++) {
+    var corner = this.corners[i];
+    var downslope = corner;
+
+    for (var k = 0; k < corner.adjacent.length; k++) {
+      var adj = corner.adjacent[k];
+
+      if (adj.elevation < downslope.elevation) {
+        downslope = adj;
+      }
+    }
+    corner.downslope = downslope;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Uses the downslopes information to generate rivers that flow downhill
+// This is done by picking random corner points that are not ocean and are
+// within elevation criteria, then follow the point downstream to the minnimum
+
+Map.prototype.createRivers = function() {
+	// Tunable paramater
+	var numRivers = (this.width + this.height) / 4;
+
+  while (numRivers--) {
+    var corner = this.corners[Util.randInt(0, this.corners.length)];
+
+    // Criteria for river startpoint including elevation thresholding
+    if (corner.ocean || corner.elevation < 0.3 ||
+        corner.elevation > 0.9) {
+      continue;
+    }
+
+    while(!corner.coast && corner != corner.downslope) {
+      var edge = this.edgeLookupFromCorners(corner, corner.downslope);
+      edge.river = (edge.river || 0) + 1;
+      corner.river = (corner.river || 0) + 1;
+      // There is double counting here but this effects the outcome of the
+      // moisture calculations for the other corners in the next step
+      corner.downslope.river = (corner.downslope.river || 0) + 1;
+      corner = corner.downslope;
+    }
+  }
+
+	for (var k = 0; k < this.corners.length; k++) {
+		var corner = this.corners[i];
+		if (corner.river) {
+			print(corner)
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+//
+//        DDDD     RRRR      AAA     W         W
+//        D  DD    R   R    A   A    W         W
+//        D   DD   RRRR     AAAAA     WW  W  WW
+//        D  DD    R  RR   AA   AA     W WWW W
+//        DDDD     R   R   A     A     WW   WW
+//
+//------------------------------------------------------------------------------
+
 
 Map.prototype.drawCell = function(cell, screen, color) {
 	var points = []
@@ -527,10 +773,18 @@ Map.prototype.drawColor = function(screen) {
 		} else if(center.water) {
 			color = this.water;
 		} else {
-			color = this.land;
+			color = Util.lerpColor(this.land, this.mountain, center.elevation);
 		}
 
 		this.drawCell(center, screen, color);
+	}
+
+	for (var k = 0; k < this.edges.length; k++) {
+		var edge = this.edges[i];
+
+		if (edge.river) {
+			Draw.line(screen, edge.v0.position, edge.v1.position, this.water, edge.river);
+		}
 	}
 }
 
@@ -604,25 +858,25 @@ Map.prototype.drawPlateBoundaries = function(screen) {
 			}
 			Draw.line(screen, edge.v0.position, edge.v1.position, edgeColor, 3);
 		} else {
-			Draw.line(screen, edge.v0.position, edge.v1.position, '#A0A0A0', 3);
+			Draw.line(screen, edge.v0.position, edge.v1.position, this.gray, 3);
 		}
 
 		// Draw.point(screen, edge.midpoint, 'red');
 	}
 }
 
-Map.prototype.drawGeoProvences = function(screen) {
+Map.prototype.drawGeoProvinces = function(screen) {
 
 	for (var i = 0; i < this.centers.length; i++) {
 		var center = this.centers[i];
 
-		if (center.geoProvence == 'ocean') {
+		if (center.geoProvince == 'ocean') {
 			color = this.oceanCrust;
-		} else if (center.geoProvence == 'craton') {
+		} else if (center.geoProvince == 'craton') {
 			color = this.craton;
-		} else if (center.geoProvence == 'orogen') {
+		} else if (center.geoProvince == 'orogen') {
 			color = this.orogen;
-		} else if (center.geoProvence == 'basin') {
+		} else if (center.geoProvince == 'basin') {
 			color = this.basin;
 		} else {
 			color = 'black';
@@ -632,6 +886,23 @@ Map.prototype.drawGeoProvences = function(screen) {
 
 		this.drawCell(center, screen, color)
  	}
+}
+
+Map.prototype.drawElevation = function(screen) {
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+		var color = Util.lerpColor(this.black, this.white, center.elevation);
+		this.drawCell(center, screen, color);
+	}
+
+	for (var i = 0; i < this.edges.length; i++) {
+		var edge = this.edges[i];
+		var v0 = edge.v0;
+		var v1 = edge.v1;
+		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
+			Draw.line(screen, v0.position, v1.position, this.gray, 1);
+		}
+	}
 }
 
 //------------------------------------------------------------------------------

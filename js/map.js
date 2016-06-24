@@ -706,11 +706,11 @@ Map.prototype.calculateDownslopes = function() {
 // within elevation criteria, then follow the point downstream to the minnimum
 
 Map.prototype.createRivers = function() {
-	// Tunable paramater
+	// Tunable Paramater
 	var numRivers = (this.width + this.height) / 4;
 
   while (numRivers--) {
-    var corner = this.corners[Util.randInt(0, this.corners.length)];
+    var corner = this.corners[[Util.randInt(0, this.corners.length)]];
 
     // Criteria for river startpoint including elevation thresholding
     if (corner.ocean || corner.elevation < 0.3 ||
@@ -728,13 +728,6 @@ Map.prototype.createRivers = function() {
       corner = corner.downslope;
     }
   }
-
-	for (var k = 0; k < this.corners.length; k++) {
-		var corner = this.corners[i];
-		if (corner.river) {
-			print(corner)
-		}
-	}
 }
 
 //------------------------------------------------------------------------------
@@ -780,10 +773,11 @@ Map.prototype.drawColor = function(screen) {
 	}
 
 	for (var k = 0; k < this.edges.length; k++) {
-		var edge = this.edges[i];
+		var edge = this.edges[k];
 
 		if (edge.river) {
-			Draw.line(screen, edge.v0.position, edge.v1.position, this.water, edge.river);
+			Draw.line(screen, edge.v0.position, edge.v1.position,
+				this.water, Math.sqrt(edge.river));
 		}
 	}
 }

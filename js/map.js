@@ -226,7 +226,7 @@ Map.prototype.gradient = function(pos) {
 // return (bool): true if position is land, false otherwise
 Map.prototype.perlinIslandShape = function(pos) {
 	// Tuneable parameters
-  var threshold = 0.2;
+  var threshold = 0.1;
   var scaleFactor = 10;
 
   var height = (noise.perlin2(pos.x / this.width * scaleFactor,
@@ -507,6 +507,10 @@ Map.prototype.generateTectonicPlates = function() {
 //------------------------------------------------------------------------------
 
 Map.prototype.assignCornerGeoProvinces = function() {
+
+	// new Seed for the geo province map
+	noise.seed(Util.rand());
+
 	// Assign Geological Province: craton, orogen, basin, ocean
 	// By default ocean is ocean and not ocean (including lakes) is craton
 	for (var i = 0; i < this.corners.length; i++) {
@@ -520,6 +524,13 @@ Map.prototype.assignCornerGeoProvinces = function() {
 		}
 
 		if (corner.geoProvince == 'craton') { // Avoids reasigning of provinces
+
+			// Noise in the boundaries of the provinces
+			var x = corner.position.x;
+			var y = corner.position.y;
+			var scale = 10;
+			var noiseOffset = 20 * noise.perlin2(x * scale / this.width, y * scale / this.height);
+
 			for (var k = 0; k < this.boundaries.length; k++) {
 				var boundary = this.boundaries[k];
 
@@ -529,8 +540,8 @@ Map.prototype.assignCornerGeoProvinces = function() {
 					Vector.distance(corner.position, boundary.p1),
 					Vector.distance(corner.position, boundary.p2) );
 
-				var orogenDistance = 50;
-				var basinDistance = 70;
+				var orogenDistance = 40 + noiseOffset;
+				var basinDistance = 60 + noiseOffset;
 				var divBasinDistance = 30;
 
 				if (boundary.type == 'convergent') {
@@ -556,6 +567,11 @@ Map.prototype.assignPolygonGeoProvinces = function() {
 	// Polygon is the most common province of all its corners
 	for (var i = 0; i < this.centers.length; i++) {
 		var center = this.centers[i];
+
+		if (center.ocean) {
+			center.geoProvince = 'ocean';
+			continue;
+		}
 
 		var counts = {};
 
@@ -825,7 +841,7 @@ Map.prototype.getTemperature = function(point) {
 	var xPeriod = this.temp.xPeriod;
 	var yPeriod = 1;
 	var turbPower = 1;
-	var turbSize = 16;
+	var turbSize = 32;
 	var scaleFactor = 100;
 
 	var xy = xPeriod * x + yPeriod * y;
@@ -873,7 +889,7 @@ Map.prototype.assignCornerTemperatures = function() {
 		var corner = this.corners[i];
 
 		var temp = this.getTemperature(corner.position);
-		corner.temperature = temp;// * (0.5 + (1 - corner.elevation) / 2);
+		corner.temperature = temp * (0.66 + (1 - corner.elevation) / 3);
 	}
 }
 

@@ -16,7 +16,7 @@ function main() {
   data.height = canvas.height;
   data.width = canvas.width;
 
-  data.numPoints = 1000;
+  data.numPoints = 8000;
   data.pointSeed = 0;
   data.mapSeed = 0;
 
@@ -55,22 +55,21 @@ function main() {
 
   // Biomes
   // ocean already decalred
-  colors.marsh = '#507F59';
+  colors.marsh = '#36692F';
   colors.ice = '#CCFFFF';
-  colors.beach = colors.coast;
-  colors.snow = colors.white;
-  colors.tundra ='#DDDDBB';
-  colors.bare = '#BBBBBB';
-  colors.taiga = '#BBD4CC';
-  colors.shrubland = '#BBCCC4';
-  colors['temperate desert'] = '#CAE8E4';
-  colors['temperate rainforest'] = '#A4C4A8';
-  colors['temperate deciduous'] = '#B4C9A9';
-  colors.grassland = '#C4D4AA';
-  colors['tropical rainforest'] = '#9CBBA9';
-  colors['tropical seasonal forest'] = '#A9CCA4';
-  colors.grassland = '#C4D4AA';
-  colors['subtropic desert'] = '#E9DDC7';
+  colors.beach = '#FFF7D0';
+  colors.snow = '#FFF3FC';
+  colors.tundra ='#B7C06F';
+  colors.bare = '#B5AD8B';
+  colors.taiga = '#8FA75A';
+  colors.shrubland = '#93A66C';
+  colors['temperate desert'] = '#D9D272';
+  colors['temperate rainforest'] = '#2B9736';
+  colors['temperate deciduous'] = '#549449';
+  colors['tropical rainforest'] = '#36972B';
+  colors['tropical seasonal forest'] = '#5E9D5E';
+  colors.grassland = '#A3C974';
+  colors['subtropic desert'] = '#FFF799';
 
 
 
@@ -324,20 +323,7 @@ function drawGeoProvinces() {
 
 	for (var i = 0; i < data.map.centers.length; i++) {
 		var center = data.map.centers[i];
-
-    var color;
-		if (center.geoProvince == 'ocean') {
-			color = colors.oceanCrust;
-		} else if (center.geoProvince == 'craton') {
-			color = colors.craton;
-		} else if (center.geoProvince == 'orogen') {
-			color = colors.orogen;
-		} else if (center.geoProvince == 'basin') {
-			color = colors.basin;
-		} else {
-			color = 'black';
-		}
-
+    var color = colors[center.geoProvince];
     color = Util.hexToRgb(color, 0.5);
 		drawCell(center, color)
  	}
@@ -459,6 +445,14 @@ function drawDiagram(delaunay) {
 	}
 }
 
+//------------------------------------------------------------------------------
+//
+//             333333    DDDD
+//            33    33   D   DD
+//                 33    D    DD
+//            33    33   D   DD
+//             333333    DDDDD
+//
 //------------------------------------------------------------------------------
 // 3D Functions are stored here
 

@@ -9,9 +9,10 @@ function main() {
   var canvas = document.createElement('canvas');
   div.appendChild(canvas);
 
-  var size = 500;
+  canvas.id = 'canvas';
   canvas.height = 400;
   canvas.width = 800;
+  data.canvas = canvas;
   data.height = canvas.height;
   data.width = canvas.width;
 
@@ -23,6 +24,14 @@ function main() {
   var screen = canvas.getContext('2d');
   data.screen = screen;
 
+  // Others
+  colors.black = '#000000';
+  colors.white = '#FFFFFF';
+  colors.gray = '#A0A0A0';
+  colors.lightGray = '#E0E0E0';
+  colors.magenta = 'FF00FF';
+
+  // Genaric Biomes
   colors.water = '#66B2FF';
 	colors.land = '#99CC99';
 	colors.mountain = '#CCFFFF';
@@ -40,9 +49,30 @@ function main() {
 	colors.orogen = '#66FFB2';
 	colors.basin = '#9999FF';
 
-	colors.black = '#000000';
-	colors.white = '#FFFFFF';
-	colors.gray = '#A0A0A0';
+  // Temperatures
+  colors.hot = '#FF9933';
+  colors.cold = '#66B2FF';
+
+  // Biomes
+  // ocean already decalred
+  colors.marsh = '#507F59';
+  colors.ice = '#CCFFFF';
+  colors.beach = colors.coast;
+  colors.snow = colors.white;
+  colors.tundra ='#DDDDBB';
+  colors.bare = '#BBBBBB';
+  colors.taiga = '#BBD4CC';
+  colors.shrubland = '#BBCCC4';
+  colors['temperate desert'] = '#CAE8E4';
+  colors['temperate rainforest'] = '#A4C4A8';
+  colors['temperate deciduous'] = '#B4C9A9';
+  colors.grassland = '#C4D4AA';
+  colors['tropical rainforest'] = '#9CBBA9';
+  colors['tropical seasonal forest'] = '#A9CCA4';
+  colors.grassland = '#C4D4AA';
+  colors['subtropic desert'] = '#E9DDC7';
+
+
 
   // Clear the data.screen
   data.screen.fillStyle = colors.white;
@@ -122,14 +152,20 @@ function createMap(pointSeed, mapSeed) {
 
 function render() {
 
-  if (data.drawMap == 'biome') {
+  if (data.drawMap == 'color') {
     drawMap();
+  } else if (data.drawMap == 'biome') {
+    drawBiomes();
   } else if (data.drawMap == 'groProvinces') {
     drawGeoProvinces();
   } else if (data.drawMap == 'elevation') {
     drawElevation();
   } else if (data.drawMap == 'moisture') {
     drawMoisture();
+  } else if (data.drawMap == 'temperature') {
+    drawTemperature();
+  } else if (data.drawMap == '3d') {
+    draw3d();
   } else {
     print('something went wrong');
   }
@@ -145,6 +181,9 @@ function render() {
   }
   if (data.plateTypes) {
     drawPlateTypes();
+  }
+  if (data.provinces) {
+    drawProvinces();
   }
 }
 
@@ -262,6 +301,22 @@ function drawPlateBoundaries() {
 }
 
 //------------------------------------------------------------------------------
+
+function drawProvinces() {
+  for (var i = 0; i < data.map.plates.centers.length; i++) {
+		var plate = data.map.plates.centers[i];
+		var color = Util.hexToRgb(Util.randHexColor(), 0.25);
+
+		for (var j = 0; j < plate.tiles.length; j++) {
+			var tile = plate.tiles[j];
+      if (!tile.ocean) {
+        drawCell(tile, color);
+      }
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
 // Draw geological provinces
 
 function drawGeoProvinces() {
@@ -314,7 +369,7 @@ function drawElevation() {
 function drawMoisture() {
 	for (var i = 0; i < data.map.centers.length; i++) {
 		var center = data.map.centers[i];
-		var color = Util.lerpColor(colors.coast,colors.land, center.moisture);
+		var color = Util.lerpColor(colors.coast, colors.land, center.moisture);
 		drawCell(center, color);
 	}
 
@@ -324,6 +379,46 @@ function drawMoisture() {
 		var v1 = edge.v1;
 		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
 			Draw.line(data.screen, v0.position, v1.position, colors.coast);
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+// Draw temperature
+
+function drawTemperature() {
+  for (var i = 0; i < data.map.centers.length; i++) {
+		var center = data.map.centers[i];
+		var color = Util.lerpColor(colors.cold, colors.hot, center.temperature);
+		drawCell(center, color);
+	}
+
+	for (var i = 0; i < data.map.edges.length; i++) {
+		var edge = data.map.edges[i];
+		var v0 = edge.v0;
+		var v1 = edge.v1;
+		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
+			Draw.line(data.screen, v0.position, v1.position, colors.lightGray);
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+
+function drawBiomes() {
+  for (var i = 0; i < data.map.centers.length; i++) {
+		var center = data.map.centers[i];
+    var biome = center.biome;
+		var color = colors[biome];
+		drawCell(center, color);
+	}
+
+	for (var k = 0; k < data.map.edges.length; k++) {
+		var edge = data.map.edges[k];
+
+		if (edge.river) {
+			Draw.line(data.screen, edge.v0.position, edge.v1.position,
+				colors.water, Math.sqrt(edge.river));
 		}
 	}
 }
@@ -362,4 +457,79 @@ function drawDiagram(delaunay) {
 		var pos = corner.position;
 		Draw.point(data.screen, pos, 'green')
 	}
+}
+
+//------------------------------------------------------------------------------
+// 3D Functions are stored here
+
+function draw3d() {
+
+  // Init
+  var scene = new THREE.Scene();
+  var camera = new THREE.OrthographicCamera(data.width / -2, data.width / 2,
+    data.height / 2, data.height / -2, 1, 1000);
+  var renderer = new THREE.WebGLRenderer();
+  renderer.setSize(data.width, data.height);
+  var div = document.getElementById('jsHook');
+  div.appendChild(renderer.domElement);
+
+  // Lights
+  var ambient = new THREE.AmbientLight( 0x404040 );
+  scene.add(ambient);
+  var light = new THREE.DirectionalLight( 0xffffff );
+	light.position.set( -1, 1, 2  );
+  light.castShadow = true;
+  scene.add(light);
+
+  // Create Terrain
+  var geometry = new THREE.Geometry();
+  var i = 0;
+
+  for (var i = 0; i < data.map.centers.length; i++) {
+    var center = data.map.centers[i];
+    for (var k = 0; k < center.corners.length - 1; k++) {
+      var c1 = center.corners[k];
+      var c2 = center.corners[k+1];
+
+      geometry.vertices.push(
+        new THREE.Vector3(c1.position.x, c1.position.y),// c1.elevation),
+        new THREE.Vector3(c2.position.x, c2.position.y),// c2.elevation),
+        new THREE.Vector3(center.position.x, center.position.y)//, center.elevation)
+      );
+
+      geometry.faces.push( new THREE.Face3(i, i+1, i+2) );
+      i += 3;
+    }
+  }
+  geometry.mergeVertices();
+  print(geometry);
+  // geometry.computeFaceNormals();
+  // geometry.computeBoundingSphere();
+  // geometry.normalize();
+
+  var material = new THREE.MeshPhongMaterial(
+    {
+      color: 0x00ff00,
+      shading: THREE.FlatShading
+    }
+  );
+
+  var terrain = new THREE.Mesh(geometry, material);
+  scene.add(terrain);
+
+  var geom = new THREE.BoxGeometry( 1, 2, 1 );
+  var mat = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
+  var cube = new THREE.Mesh( geom, mat );
+  scene.add( cube );
+
+  cube.rotation.x += 20;
+  cube.rotation.y += 15;
+
+  camera.position.z = 500;
+
+  function render() {
+    requestAnimationFrame( render );
+    renderer.render( scene, camera );
+  }
+  render();
 }

@@ -3,11 +3,14 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 	// Tuneable parameters
 	this.lakeThreshold = 0.3; // Fraction of water corners for water polygon
 
+	// Function that dictates land vs. water tiles
+	this.islandShape = this.perlinIslandShape;
+
 	this.width = width;
 	this.height = height;
 	this.numPoints = numPoints;
-	this.mSeed = mapSeed || Math.random();
-	this.pSeed = pointSeed || Math.random();
+	this.mSeed = mapSeed || Util.rand();
+	this.pSeed = pointSeed || Util.rand();
 
 	// Set seed values for the map
 	noise.seed(this.mSeed);
@@ -42,6 +45,14 @@ Map.prototype.generateMap = function() {
 	this.assignCornerMoisture();
 	this.redistributeMoisture(this.landCorners());
 	this.assignPolygonMoisture();
+
+	// Temperature
+	this.assignCornerTemperatures();
+	this.assignPolygonTemperatures();
+
+	// Biomes
+	this.assignCornerBiomes();
+	this.assignCenterBiomes();
 }
 
 //------------------------------------------------------------------------------
@@ -226,7 +237,7 @@ Map.prototype.perlinIslandShape = function(pos) {
   return height > threshold;
 }
 
-Map.prototype.prelinLandShape = function(pos) {
+Map.prototype.perlinLandShape = function(pos) {
 	// Tuneable parameters
 	var scaleFactor = 3;
 		var threshold = 0.5;
@@ -255,7 +266,7 @@ Map.prototype.assignOceanCoastAndLand = function() {
 	// Assign corner type water
 	for (var i = 0; i < this.corners.length; i++) {
 		var corner = this.corners[i];
-		corner.water = !this.perlinIslandShape(corner.position);
+		corner.water = !this.islandShape(corner.position);
 		corner.ocean = false;
 	}
 
@@ -519,13 +530,18 @@ Map.prototype.assignCornerGeoProvinces = function() {
 					Vector.distance(corner.position, boundary.p2) );
 
 				var orogenDistance = 50;
-				var basonDistance = 70;
+				var basinDistance = 70;
+				var divBasinDistance = 30;
 
 				if (boundary.type == 'convergent') {
 					if (distToBoundary < orogenDistance) {
 						corner.geoProvince = 'orogen';
 						break;
-					} else if (!corner.coast && distToBoundary < basonDistance) {
+					} else if (!corner.coast && distToBoundary < basinDistance) {
+						corner.geoProvince = 'basin';
+					}
+				} else if (boundary.type == 'divergent') {
+					if (distToBoundary < divBasinDistance) {
 						corner.geoProvince = 'basin';
 					}
 				}
@@ -728,7 +744,7 @@ Map.prototype.assignCornerMoisture = function() {
 
     if ((corner.water || corner.river > 0) && !corner.ocean) {
       corner.moisture = corner.river > 0 ?
-        Math.min(3.0, (2.0 * corner.river)) : 1.0;
+				Math.min(3.0, (0.2 * corner.river)) : 1.0;
       queue.push(corner);
     } else {
       corner.moisture = 0.0;
@@ -764,7 +780,7 @@ Map.prototype.assignCornerMoisture = function() {
 Map.prototype.redistributeMoisture = function(locations) {
   locations.sort(Util.propComp('moisture'));
   for (var i = 0, l = locations.length; i < l; i++) {
-    locations[i].moisture = i / (l - 1);
+    locations[i].moisture = i / l;
   }
 }
 
@@ -786,4 +802,155 @@ Map.prototype.assignPolygonMoisture = function() {
 
     center.moisture = sumMoisture / center.corners.length;
   }
+}
+
+//------------------------------------------------------------------------------
+// Helper function to assign the moisture of all the corners
+
+Map.prototype.getTemperature = function(point) {
+
+	function turbulance(x, y, size) {
+		var initialSize = size;
+		var value = 0;
+		while (size >= 1) {
+			value += noise.perlin2(x / size, y / size) * size;
+			size /= 2;
+		}
+		return value / initialSize;
+	}
+
+	var x = point.x / this.width;
+	var y = point.y / this.height;
+
+	var xPeriod = this.temp.xPeriod;
+	var yPeriod = 1;
+	var turbPower = 1;
+	var turbSize = 16;
+	var scaleFactor = 100;
+
+	var xy = xPeriod * x + yPeriod * y;
+
+	noise.seed(this.temp.t1Seed);
+	var turb = turbPower * turbulance(x * scaleFactor, y * scaleFactor, turbSize);
+
+	var transform = this.temp.transform;
+	var translation = this.temp.translation;
+
+	// var intensity = (-Math.cos(xy * (2 * Math.PI + transform) + translation + turb) + 1) / 2;
+	var intensity = 1 - Math.abs(Math.cos(xy * (Math.PI + transform) + translation + turb));
+
+	noise.seed(this.temp.seed);
+	var variability = turbPower * turbulance(x * scaleFactor, y * scaleFactor, turbSize);
+	variability = (variability + 1) / 2;
+
+	var result = intensity;
+
+	return result;
+}
+
+//------------------------------------------------------------------------------
+
+Map.prototype.assignCornerTemperatures = function() {
+
+	// Initilize parameters for the temperature function
+	this.temp = {}
+
+	this.temp.seed = Util.rand();
+
+	this.temp.xPeriod = Util.randRange(-0.2, 0.2);
+
+	this.temp.transform = Util.randRange(-Math.PI, 0);
+	var halfTransf = this.temp.transform / 2;
+	// Center the transform and move across the possible period of the function
+	// The outputs are skewed towards the center of the range
+	this.temp.translation = -halfTransf +// Util.randRange(-halfTransf, halfTransf);
+		// Math.cbrt(Util.randRange(-Math.pow(halfTransf, 3), Math.pow(halfTransf, 3)));
+		Math.pow(Util.randRange(-Math.cbrt(halfTransf), Math.cbrt(halfTransf)), 3);
+
+	// Get individual polygon temperatures
+
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+
+		var temp = this.getTemperature(corner.position);
+		corner.temperature = temp;// * (0.5 + (1 - corner.elevation) / 2);
+	}
+}
+
+//------------------------------------------------------------------------------
+// Polygon temperature is the average of it's corner temperatures
+
+Map.prototype.assignPolygonTemperatures = function() {
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+
+		var sum = 0;
+		for (var k = 0; k < center.corners.length; k++) {
+			var corner = center.corners[k];
+
+			sum += corner.temperature
+		}
+
+		center.temperature = sum / center.corners.length;
+	}
+}
+
+//------------------------------------------------------------------------------
+// Get the biome based on the elevation and temperature data in the polygon
+
+Map.prototype.getBiome = function(center) {
+	var moisture = center.moisture;
+	var temp = center.temperature;
+
+	if (center.ocean) {
+		return 'ocean';
+	} else if (center.water) {
+		if (temp > 0.8) {
+			return 'marsh';
+		} else if (temp < 0.1) {
+			return 'ice';
+		} else {
+			return 'water';
+		}
+	} else if (center.coast) {
+		return 'beach';
+	} else if (temp < 0.25) {
+		if (moisture > 0.5) return 'snow';
+		else if (moisture > 0.17) return 'tundra';
+		else return 'bare';
+	} else if (temp < 0.5) {
+		if (moisture > 0.67) return 'taiga';
+		else if (moisture > 0.33) return 'shrubland';
+		else return 'temperate desert';
+	} else if (temp < 0.75) {
+		if (moisture > 0.83) return 'temperate rainforest';
+		else if (moisture > 0.5) return 'temperate deciduous';
+		else if (moisture > 0.17) return 'grassland';
+		else return 'temperate desert';
+	} else {
+		if (moisture > 0.67) return 'tropical rainforest';
+		else if (moisture > 0.33) return 'tropical seasonal forest';
+		else if (moisture > 0.17) return 'grassland';
+		else return 'subtropic desert';
+	}
+}
+
+//------------------------------------------------------------------------------
+
+Map.prototype.assignCornerBiomes = function() {
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+
+		corner.biome = this.getBiome(corner);
+	}
+}
+
+//------------------------------------------------------------------------------
+
+Map.prototype.assignCenterBiomes = function() {
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+
+		center.biome = this.getBiome(center);
+	}
 }

@@ -13,6 +13,7 @@
     <script src="js/lib/rhill-voronoi-core.js"></script>
     <script src="js/lib/perlin.js"></script>
     <script src="js/lib/seedrandom.js"></script>
+    <script src="js/lib/three.js"></script>
     <script src="js/main.js"></script>
 
   </head>
@@ -26,23 +27,27 @@
         Point Seed: <input id='pointSeed' type="Number" name="pointSeed" placeholder="Point Seed">
         Map Seed: <input id='mapSeed' type="Number" name="mapSeed" placeholder="Map Seed"></br>
 
+        <!--
+        Number of Points: <input id='numPoints' type="Number" name="numPoints" placeholder="Number of Pounts"></br>
+
+        Width: <input id='width' type="Number" name="width" placeholder="Width">
+        Height: <input id='height' type="Number" name="height" placeholder="Height"></br>
+        -->
+        
         Daigram: <input type="checkbox" name="diagram" value="false">
         Plates: <input type="checkbox" name="plates" value="false">
         Plate Boundaries: <input type="checkbox" name="boundaries" value="false">
-        Plate Types: <input type="checkbox" name="plateTypes" value="false"> </br>
+        Plate Types: <input type="checkbox" name="plateTypes" value="false">
+        Provinces: <input type="checkbox" name="provinces" value="false"> </br>
 
-        Biome Map: <input type='radio' name='drawMap' value='biome' checked='checked'>
+        Genaric Map: <input type='radio' name='drawMap' value='color' checked='checked'>
+        Biome Map: <input type='radio' name='drawMap' value='biome'>
         Geological Provinces: <input type='radio' name='drawMap' value='groProvinces'>
         Elevation: <input type='radio' name='drawMap' value='elevation'>
-        Moisture: <input type='radio' name='drawMap' value='moisture'></br>
+        Moisture: <input type='radio' name='drawMap' value='moisture'>
+        Temperature: <input type='radio' name='drawMap' value='temperature'>
+        3D Map: <input type='radio' name='drawMap' value='3d'></br>
       </form>
-
-      <!--button onclick='drawMap()'>Draw Map</button>
-      <button onclick='drawDiagram()'>Draw Diagram</button>
-      <button onclick='drawPlates()'>Draw Plates</button>
-      <button onclick='drawPlateBoundaries()'>Draw Plate Boundaries</button>
-      <button onclick='drawGeoProvinces()'>Draw Geo Provinces</button>
-      <button onclick='drawPlateTypes()'>Draw Plate Types</button-->
     </div>
 
     <div id='jsHook' ></div>

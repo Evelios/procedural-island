@@ -15,8 +15,13 @@ function main() {
   data.canvas = canvas;
   data.height = canvas.height;
   data.width = canvas.width;
+  document.getElementById('height').value = data.height;
+  document.getElementById('width').value = data.width;
 
-  data.numPoints = 8000;
+  data.numPoints = 1000;
+  document.getElementById('numPoints').value = data.numPoints;
+
+  data.maxSeed = 65536;
   data.pointSeed = 0;
   data.mapSeed = 0;
 
@@ -88,7 +93,7 @@ function setUp() {
 
   for ( var i = 0; i < form.elements.length; i++ ) {
     var e = elements[i];
-    if (e.name != 'pointSeed' || e.name != 'mapSeed') {
+    if (e.type != 'Number') {
       elements[i].onchange = function() {
         update();
       }
@@ -108,6 +113,7 @@ function readForm() {
   for ( var i = 0; i < form.elements.length; i++ ) {
     var e = form.elements[i];
     var value = e.type == 'checkbox' ? e.checked : e.value;
+    var value = parseInt(value) ? parseInt(value) : value;
     var name = e.name;
 
     if (e.type == 'radio') {
@@ -125,10 +131,10 @@ function readForm() {
 
 function generateRandom() {
 
-  var pointSeed = Util.randInt(0, Number.MAX_SAFE_INTEGER);
+  var pointSeed = Util.randInt(0, data.maxSeed);
   document.getElementById('pointSeed').value = pointSeed;
 
-  var mapSeed = Util.randInt(0, Number.MAX_SAFE_INTEGER);
+  var mapSeed = Util.randInt(0, data.maxSeed);
   document.getElementById('mapSeed').value = mapSeed;
 
   createMap(pointSeed, mapSeed);
@@ -143,7 +149,9 @@ function generate() {
 }
 
 function createMap(pointSeed, mapSeed) {
- data.map = new Map(data.width, data.height, data.numPoints, pointSeed, mapSeed);
+  data.canvas.height = data.height;
+  data.canvas.width = data.width;
+  data.map = new Map(data.width, data.height, data.numPoints, pointSeed, mapSeed);
   update();
 }
 

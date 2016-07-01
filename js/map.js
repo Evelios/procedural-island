@@ -25,8 +25,13 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 
 Map.prototype.generateMap = function() {
 
+	var start, end;
+
+	start = new Date().getTime();
 	// Diagram
 	this.generateTiles();
+	end = new Date().getTime();
+	print(end - start)
 
 	// Create Provinces
 	this.assignOceanCoastAndLand();
@@ -129,60 +134,6 @@ Map.prototype.generateDiagram = function(points, relaxations) {
 }
 
 //------------------------------------------------------------------------------
-// Helper function to create diagram
-//
-// Lloyd relaxation helped to create uniformity among polygon centers,
-// This function creates uniformity among polygon corners by setting the corners
-// to the average of their neighbors
-// This breakes the voronoi diagram properties
-
-Map.prototype.improveCorners = function() {
-
-	var newCorners = [];
-
-	// Calculate new corner positions
-	for (var i = 0; i < this.corners.length; i++) {
-		var corner = this.corners[i];
-
-		if (corner.border) {
-			newCorners[i] = corner.position;
-		} else {
-			var newPos = Vector.zero();
-
-			for (var k = 0; k < corner.touches.length; k++) {
-				var neighbor = corner.touches[k];
-				newPos = newPos.add(neighbor.position);
-			}
-
-			newPos = newPos.divide(corner.touches.length);
-			newCorners[i] = newPos;
-		}
-	}
-
-	// Assign new corner positions
-	for (var i = 0; i < this.corners.length; i++) {
-		var corner = this.corners[i];
-		corner.position = newCorners[i];
-	}
-
-	// Recompute edge midpoints
-	for (var j = 0; j < this.edges.length; j++) {
-		var edge = this.edges[j];
-
-		if (edge.v0 && edge.v1) {
-			edge.midpoint = Vector.midpoint(edge.v0.position, edge.v1.position);
-		}
-	}
-
-	// Resort the corners into clockwise ordered corners
-	for (var i = 0; i <this.centers.length; i++) {
-		var center = this.centers[i];
-		var comp = Util.comparePolyPoints(center);
-		center.corners.sort(comp);
-  	}
-}
-
-//------------------------------------------------------------------------------
 // Generates the map tiles that are to be used as the basis of the map
 // The tiles are PAN connected relaxed voronoi diagram with relaxes corners
 
@@ -197,8 +148,6 @@ Map.prototype.generateTiles = function() {
 	this.centers = diagram.centers;
 	this.corners = diagram.corners;
 	this.edges = diagram.edges;
-
-	this.improveCorners();
 }
 //------------------------------------------------------------------------------
 // Helper function for the island shape functions

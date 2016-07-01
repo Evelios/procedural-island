@@ -231,8 +231,56 @@ Diagram.prototype.convertDiagram = function(voronoi) {
 
     this.edges.push(newEdge);
 
-    this.sortCorners();
+    // this.improveCorners();
+    // this.sortCorners();
   }
+}
+
+//------------------------------------------------------------------------------
+// Helper function to create diagram
+//
+// Lloyd relaxation helped to create uniformity among polygon centers,
+// This function creates uniformity among polygon corners by setting the corners
+// to the average of their neighbors
+// This breakes the voronoi diagram properties
+
+Diagram.prototype.improveCorners = function() {
+
+	var newCorners = [];
+
+	// Calculate new corner positions
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+
+		if (corner.border) {
+			newCorners[i] = corner.position;
+		} else {
+			var newPos = Vector.zero();
+
+			for (var k = 0; k < corner.touches.length; k++) {
+				var neighbor = corner.touches[k];
+				newPos = newPos.add(neighbor.position);
+			}
+
+			newPos = newPos.divide(corner.touches.length);
+			newCorners[i] = newPos;
+		}
+	}
+
+	// Assign new corner positions
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+		corner.position = newCorners[i];
+	}
+
+	// Recompute edge midpoints
+	for (var j = 0; j < this.edges.length; j++) {
+		var edge = this.edges[j];
+
+		if (edge.v0 && edge.v1) {
+			edge.midpoint = Vector.midpoint(edge.v0.position, edge.v1.position);
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -242,7 +290,55 @@ Diagram.prototype.convertDiagram = function(voronoi) {
 Diagram.prototype.sortCorners = function() {
   for (var i = 0, l = this.centers.length; i < l; i++) {
     var center = this.centers[i];
-    var comp = Util.comparePolyPoints(center);
+    var comp = this.comparePolyPoints(center);
     center.corners.sort(comp);
+  }
+}
+
+//------------------------------------------------------------------------------
+// Comparison function for sorting polygon points in clockwise order
+// assuming a convex polygon
+// http://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
+Diagram.prototype.comparePolyPoints = function(c) {
+  var center = c.position;
+  return function(p1, p2) {
+    var a = p1.position, b = p2.position;
+
+    if (a.x - center.x >= 0 && b.x - center.x < 0)
+      return -1;
+    if (a.x - center.x < 0 && b.x - center.x >= 0)
+      return 1;
+    if (a.x - center.x == 0 && b.x - center.x == 0) {
+      if (a.y - center.y >= 0 || b.y - center.y >= 0) {
+        if (a.y > b.y) {
+          return -1;
+        } else {
+          return 1;
+        }
+      }
+      if (b.y > a.y) {
+        return -1;
+      } else {
+        return 1;
+      }
+    }
+
+    // compute the cross product of vectors (center -> a) x (center -> b)
+    var det = (a.x - center.x) * (b.y - center.y) - (b.x - center.x) * (a.y - center.y);
+    if (det < 0)
+        return -1;
+    if (det > 0)
+        return 1;
+
+    // points a and b are on the same line from the center
+    // check which point is closer to the center
+    var d1 = (a.x - center.x) * (a.x - center.x) + (a.y - center.y) * (a.y - center.y);
+    var d2 = (b.x - center.x) * (b.x - center.x) + (b.y - center.y) * (b.y - center.y);
+  if (d1 > d2) {
+    return -1;
+  } else {
+    return 1;
+  }
+
   }
 }

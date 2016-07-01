@@ -27,11 +27,8 @@ Map.prototype.generateMap = function() {
 
 	var start, end;
 
-	start = new Date().getTime();
 	// Diagram
 	this.generateTiles();
-	end = new Date().getTime();
-	print(end - start)
 
 	// Create Provinces
 	this.assignOceanCoastAndLand();

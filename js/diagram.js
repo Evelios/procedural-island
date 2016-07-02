@@ -231,7 +231,7 @@ Diagram.prototype.convertDiagram = function(voronoi) {
 
     this.edges.push(newEdge);
 
-    this.improveCorners();
+    // this.improveCorners();
     this.sortCorners();
   }
 }

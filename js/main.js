@@ -34,7 +34,9 @@ function main() {
   colors.white = '#FFFFFF';
   colors.gray = '#A0A0A0';
   colors.lightGray = '#E0E0E0';
-  colors.magenta = 'FF00FF';
+  colors.magenta = '#FF00FF';
+  colors.bad = '#FF6666'
+  colors.good = '#33FF33'
 
   // Genaric Biomes
   colors.water = '#66B2FF';
@@ -151,7 +153,10 @@ function generate() {
 function createMap(pointSeed, mapSeed) {
   data.canvas.height = data.height;
   data.canvas.width = data.width;
+  // Create map
   data.map = new Map(data.width, data.height, data.numPoints, pointSeed, mapSeed);
+  // Run map modules
+  Culture.assignCulture(data.map);
   update();
 }
 
@@ -171,6 +176,8 @@ function render() {
     drawMoisture();
   } else if (data.drawMap == 'temperature') {
     drawTemperature();
+  } else if (data.drawMap == 'livingCondition') {
+    drawLivingCondition();
   } else if (data.drawMap == '3d') {
     draw3d();
   } else {
@@ -418,6 +425,26 @@ function drawBiomes() {
 }
 
 //------------------------------------------------------------------------------
+// Draw Culture living conditions
+
+function drawLivingCondition() {
+  for (var i = 0; i < data.map.centers.length; i++) {
+		var center = data.map.centers[i];
+		var color = Util.lerpColor(colors.bad, colors.good, center.livingCondition);
+		drawCell(center, color);
+	}
+
+	for (var i = 0; i < data.map.edges.length; i++) {
+		var edge = data.map.edges[i];
+		var v0 = edge.v0;
+		var v1 = edge.v1;
+		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
+			Draw.line(data.screen, v0.position, v1.position, colors.good);
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
 // Draw the voronoi diagram
 
 function drawDiagram(delaunay) {
@@ -455,14 +482,13 @@ function drawDiagram(delaunay) {
 
 //------------------------------------------------------------------------------
 //
-//             333333    DDDD
-//            33    33   D   DD
-//                 33    D    DD
-//            33    33   D   DD
-//             333333    DDDDD
+//        DDDD     RRRR      AAA     W         W       333333    DDDD
+//        D  DD    R   R    A   A    W         W      33    33   D   DD
+//        D   DD   RRRR     AAAAA     WW  W  WW            33    D    DD
+//        D  DD    R  RR   AA   AA     W WWW W        33    33   D   DD
+//        DDDD     R   R   A     A     WW   WW         333333    DDDDD
 //
 //------------------------------------------------------------------------------
-// 3D Functions are stored here
 
 function draw3d() {
 

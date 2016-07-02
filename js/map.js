@@ -39,18 +39,18 @@ Map.prototype.generateMap = function() {
 	// Elevations
 	this.assignCornerElevations();
 	this.redistributeElevations(this.landCorners());
-	this.assignPolygonElevations();
+	this.assignPolygonAverage('elevation');
 
 	// Assign Moisture
   this.calculateDownslopes();
   this.createRivers();
 	this.assignCornerMoisture();
 	this.redistributeMoisture(this.landCorners());
-	this.assignPolygonMoisture();
+	this.assignPolygonAverage('moisture');
 
 	// Temperature
 	this.assignCornerTemperatures();
-	this.assignPolygonTemperatures();
+	this.assignPolygonAverage('temperature');
 
 	// Biomes
 	this.assignCornerBiomes();
@@ -110,6 +110,29 @@ Map.prototype.generateRandomPoints = function(length) {
 		points.push(point);
 	}
 	return points;
+}
+
+//------------------------------------------------------------------------------
+// Helper function for the map object, it averages a property of the corners
+// and assigns it to the polyon centers
+//
+// params:
+//		prop (String): The property that is being averaged to the polygon
+//			the property must be a Number type to be averaged
+
+Map.prototype.assignPolygonAverage = function(prop) {
+	for (var i = 0; i < this.centers.length; i++) {
+		var center = this.centers[i];
+
+		var sum = 0;
+		for (var k = 0; k < center.corners.length; k++) {
+			var corner = center.corners[k];
+
+			sum += corner[prop];
+		}
+
+		center[prop] = sum / center.corners.length;
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -627,23 +650,6 @@ Map.prototype.redistributeElevations = function(locations) {
 }
 
 //------------------------------------------------------------------------------
-
-Map.prototype.assignPolygonElevations = function() {
-
-  for (var i = 0; i < this.centers.length; i++) {
-    var center = this.centers[i];
-    var sumElevation = 0.0;
-
-    for (var k = 0; k < center.corners.length; k++) {
-      var corner = center.corners[k];
-      sumElevation += corner.elevation;
-    }
-
-    center.elevation = sumElevation / center.corners.length;
-  }
-}
-
-//------------------------------------------------------------------------------
 // For every corner we calculate its downslope. That is a pointer that
 // refrences to the corner that is at a lower elevation than itself, if there
 // is no downslope point, the pointer points to itself
@@ -747,26 +753,6 @@ Map.prototype.redistributeMoisture = function(locations) {
 }
 
 //------------------------------------------------------------------------------
-// Polygon moisture is just the average of the moistures at the corners
-
-Map.prototype.assignPolygonMoisture = function() {
-  for (var i = 0; i < this.centers.length; i++) {
-    var center = this.centers[i];
-
-    var sumMoisture = 0.0;
-    for (var k = 0; k < center.corners.length; k++) {
-      var corner = center.corners[k];
-      if (corner.moisture > 1.0) {
-        corner.moisture = 1.0;
-      }
-      sumMoisture += corner.moisture;
-    }
-
-    center.moisture = sumMoisture / center.corners.length;
-  }
-}
-
-//------------------------------------------------------------------------------
 // Helper function to assign the moisture of all the corners
 
 Map.prototype.getTemperature = function(point) {
@@ -836,24 +822,6 @@ Map.prototype.assignCornerTemperatures = function() {
 
 		var temp = this.getTemperature(corner.position);
 		corner.temperature = temp * (0.66 + (1 - corner.elevation) / 3);
-	}
-}
-
-//------------------------------------------------------------------------------
-// Polygon temperature is the average of it's corner temperatures
-
-Map.prototype.assignPolygonTemperatures = function() {
-	for (var i = 0; i < this.centers.length; i++) {
-		var center = this.centers[i];
-
-		var sum = 0;
-		for (var k = 0; k < center.corners.length; k++) {
-			var corner = center.corners[k];
-
-			sum += corner.temperature
-		}
-
-		center.temperature = sum / center.corners.length;
 	}
 }
 

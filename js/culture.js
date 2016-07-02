@@ -5,6 +5,8 @@ var Culture = {};
 Culture.assignCulture = function(map) {
 	Culture.assignCornerLivingConditions(map);
 	map.assignPolygonAverage('livingCondition');
+
+	Culture.createTowns(map);
 }
 
 //------------------------------------------------------------------------------
@@ -31,5 +33,24 @@ Culture.assignCornerLivingConditions = function(map) {
 		var e = 1 - corner.elevation;
 
 		corner.livingCondition = m / 3 + t / 3 + e / 3;
+	}
+}
+
+//------------------------------------------------------------------------------
+
+Culture.createTowns = function(map) {
+	var numTowns = 200;
+
+	map.towns = [];
+
+	while (numTowns--) {
+		var tile = map.centers[ Util.randInt(0, map.centers.length) ];
+		if (tile.water || tile.town) continue;
+
+		var settlementRoll = Math.sqrt(Util.rand());
+		if (settlementRoll < tile.livingCondition) {
+			tile.town = true;
+			map.towns.push(tile);
+		}
 	}
 }

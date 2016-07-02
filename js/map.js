@@ -584,7 +584,7 @@ Map.prototype.assignCornerElevations = function() {
 		var corner = queue.shift();
 
 		// Used for filling algorithm not to get stuck in infinite loop
-		var epsilon = 0.001;
+		var epsilon = 0.05;
 		// Small step used for land tiles
 		var delta = 0.1;
 		// Normal step
@@ -640,7 +640,7 @@ Map.prototype.redistributeElevations = function(locations) {
     //  *  y = 2x - x^2
     //  *  x^2 - 2x + y = 0
     // From this we can use the quadratic equation to get:
-    x = Math.sqrt(scaleFactor) - Math.sqrt(scaleFactor*(1 - y));
+    x = Math.sqrt(scaleFactor) - Math.sqrt(scaleFactor * (1 - y) );
     if (x > 1.0) {
       x = 1.0;
     }

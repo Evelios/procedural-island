@@ -25,9 +25,15 @@ function main() {
   data.pointSeed = 0;
   data.mapSeed = 0;
 
+  // data.fov = 60;
+
   var backgroundColor = 'white';
   var screen = canvas.getContext('2d');
   data.screen = screen;
+
+  setUp3d();
+
+  // Color Assignments
 
   // Others
   colors.black = '#000000';
@@ -79,6 +85,7 @@ function main() {
   colors['subtropic desert'] = '#FFF799';
 
 
+  // Run the map generator
 
   // Clear the data.screen
   data.screen.fillStyle = colors.white;
@@ -178,10 +185,10 @@ function render() {
     drawTemperature();
   } else if (data.drawMap == 'livingCondition') {
     drawLivingCondition();
-  } else if (data.drawMap == '3d') {
+  } else if (data.drawMap == 'render') {
     draw3d();
   } else {
-    print('something went wrong');
+    print(data.drawMap + ' is not found.');
   }
 
   if (data.diagram) {
@@ -198,6 +205,9 @@ function render() {
   }
   if (data.provinces) {
     drawProvinces();
+  }
+  if (data.towns) {
+    drawTowns();
   }
 }
 
@@ -328,6 +338,15 @@ function drawProvinces() {
       }
 		}
 	}
+}
+
+//------------------------------------------------------------------------------
+
+function drawTowns() {
+  for (var i = 0; i < data.map.towns.length; i++) {
+    var tile = data.map.towns[i];
+    drawCell(tile, Util.randHexColor());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -490,74 +509,103 @@ function drawDiagram(delaunay) {
 //
 //------------------------------------------------------------------------------
 
-function draw3d() {
-
+function setUp3d() {
   // Init
-  var scene = new THREE.Scene();
-  var camera = new THREE.OrthographicCamera(data.width / -2, data.width / 2,
-    data.height / 2, data.height / -2, 1, 1000);
-  var renderer = new THREE.WebGLRenderer();
-  renderer.setSize(data.width, data.height);
+  data.scene = new THREE.Scene();
+
+  data.camera = new THREE.OrthographicCamera(data.width, 0 , data.height, 0, 1, 1000);
+
+  // Rotate the camera to be in line with the 2D space
+  data.camera.rotation.z = Math.PI;
+
+  data.camera.position.x = data.width;
+  data.camera.position.y = data.height;
+  data.camera.position.z = 200;
+  // camera.position.z = cameraHeight;
+
+
+  data.renderer = new THREE.WebGLRenderer();
+  data.renderer.setSize(data.width, data.height);
   var div = document.getElementById('jsHook');
-  div.appendChild(renderer.domElement);
+  div.appendChild(data.renderer.domElement);
 
   // Lights
   var ambient = new THREE.AmbientLight( 0x404040 );
-  scene.add(ambient);
+  data.scene.add(ambient);
   var light = new THREE.DirectionalLight( 0xffffff );
-	light.position.set( -1, 1, 2  );
+	light.position.set( 1, 1, -1);
   light.castShadow = true;
-  scene.add(light);
+  data.scene.add(light);
+
+  data.removeableItems = [];
+}
+
+function renderScene() {
+  data.renderer.render( data.scene, data.camera );
+}
+
+// Removing old items from the scene
+// http://stackoverflow.com/questions/37762961/three-js-proper-removing-object-from-scene-still-reserved-in-heap
+function clean() {
+  if (data.removeableItems.length > 0 ) {
+    data.removeableItems.forEach(function(v,i) {
+       v.parent.remove(v);
+    });
+    data.removeableItems = null;
+    data.removeableItems = [];
+  }
+}
+
+function addToScene(obj) {
+  data.scene.add(obj);
+  data.removeableItems.push(obj);
+}
+
+function draw3d() {
+  clean();
+
+  var eleScale = 20;
 
   // Create Terrain
   var geometry = new THREE.Geometry();
-  var i = 0;
+  var vert = 0;
 
   for (var i = 0; i < data.map.centers.length; i++) {
     var center = data.map.centers[i];
-    for (var k = 0; k < center.corners.length - 1; k++) {
+
+    for (var k = 0; k < center.corners.length; k++) {
       var c1 = center.corners[k];
-      var c2 = center.corners[k+1];
+      var c2 = center.corners[(k+1) % center.corners.length];
 
       geometry.vertices.push(
-        new THREE.Vector3(c1.position.x, c1.position.y),// c1.elevation),
-        new THREE.Vector3(c2.position.x, c2.position.y),// c2.elevation),
-        new THREE.Vector3(center.position.x, center.position.y)//, center.elevation)
+        new THREE.Vector3(c1.position.x, c1.position.y, c1.elevation * eleScale),
+        new THREE.Vector3(c2.position.x, c2.position.y, c2.elevation * eleScale),
+        new THREE.Vector3(center.position.x, center.position.y, center.elevation * eleScale)
       );
 
-      geometry.faces.push( new THREE.Face3(i, i+1, i+2) );
-      i += 3;
+      var face = new THREE.Face3(vert, vert+1, vert+2);
+      face.vertexColors = [
+        new THREE.Color(colors[c1.biome]),
+        new THREE.Color(colors[c2.biome]),
+        new THREE.Color(colors[center.biome])
+      ];
+      geometry.faces.push(face);
+      vert += 3;
     }
   }
   geometry.mergeVertices();
-  print(geometry);
-  // geometry.computeFaceNormals();
-  // geometry.computeBoundingSphere();
-  // geometry.normalize();
+  geometry.computeFaceNormals();
 
   var material = new THREE.MeshPhongMaterial(
     {
-      color: 0x00ff00,
-      shading: THREE.FlatShading
+      color: 0xffffff,
+      shading: THREE.FlatShading,
+      vertexColors: THREE.VertexColors
     }
   );
 
   var terrain = new THREE.Mesh(geometry, material);
-  scene.add(terrain);
+  addToScene(terrain);
 
-  var geom = new THREE.BoxGeometry( 1, 2, 1 );
-  var mat = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
-  var cube = new THREE.Mesh( geom, mat );
-  scene.add( cube );
-
-  cube.rotation.x += 20;
-  cube.rotation.y += 15;
-
-  camera.position.z = 500;
-
-  function render() {
-    requestAnimationFrame( render );
-    renderer.render( scene, camera );
-  }
-  render();
+  renderScene();
 }

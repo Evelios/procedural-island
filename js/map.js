@@ -316,6 +316,14 @@ Map.prototype.assignOceanCoastAndLand = function() {
 			((numLand != corner.touches.length) && !corner.coast);
 	}
 
+	// Assign coast value to edge tiles
+	for (var i = 0; i < this.edges.length; i++) {
+		var edge = this.edges[i];
+		edge.coast = edge.v0.coast && edge.v1.coast &&
+			(edge.d0.ocean || edge.d1.ocean) &&
+			(!edge.d0.water || !edge.d1.water);
+	}
+
 }
 
 //------------------------------------------------------------------------------

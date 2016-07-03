@@ -1,6 +1,59 @@
 data = {};
 
 colors = {};
+// Color Assignments
+
+// Others
+colors.black = '#000000';
+colors.white = '#FFFFFF';
+colors.gray = '#A0A0A0';
+colors.lightGray = '#E0E0E0';
+colors.magenta = '#FF00FF';
+colors.bad = '#FF6666'
+colors.good = '#33FF33'
+
+// Genaric Biomes
+colors.water = '#74BBFD';
+colors.land = '#99CC99';
+colors.mountain = '#CCFFFF';
+colors.coast = '#EBE0C0';
+colors.ocean = '#4864DB';
+
+// Plate Boundaries
+colors.convergent = '#FF0000';
+colors.transform = '#00FF00';
+colors.divergent = '#0000FF';
+
+// Geo Provinces
+colors.oceanCrust = '#99CCFF';
+colors.craton = '#FF99FF';
+colors.orogen = '#66FFB2';
+colors.basin = '#9999FF';
+
+// Temperatures
+colors.hot = '#FF9933';
+colors.cold = '#66B2FF';
+
+// Biomes
+// ocean already decalred
+colors.marsh = '#37B596';
+colors.ice = '#BDFFFF';
+colors.beach = '#F8EFBD';
+colors.snow = '#FFF3FC';
+colors.tundra ='#B9D271';
+colors.bare = '#B5AD8B';
+colors.taiga = '#A8C95F';
+colors.shrubland = '#A3CA7C';
+colors['temperate desert'] = '#E8DF91';
+colors['temperate rainforest'] = '#45B33B';
+colors['temperate deciduous'] = '#7BC16E';
+colors.grassland = '#ADD37D';
+colors['tropical rainforest'] = '#23A336';
+colors['tropical seasonal forest'] = '#57BB57';
+colors['subtropic desert'] = '#F4EEA4';
+
+//------------------------------------------------------------------------------
+// Main Function Call
 
 function main() {
 
@@ -33,63 +86,7 @@ function main() {
 
   setUp3d();
 
-  // Color Assignments
-
-  // Others
-  colors.black = '#000000';
-  colors.white = '#FFFFFF';
-  colors.gray = '#A0A0A0';
-  colors.lightGray = '#E0E0E0';
-  colors.magenta = '#FF00FF';
-  colors.bad = '#FF6666'
-  colors.good = '#33FF33'
-
-  // Genaric Biomes
-  colors.water = '#66B2FF';
-	colors.land = '#99CC99';
-	colors.mountain = '#CCFFFF';
-	colors.coast = '#EBE0C0';
-	colors.ocean = '#0066CC';
-
-  // Plate Boundaries
-  colors.convergent = '#FF0000';
-  colors.transform = '#00FF00';
-  colors.divergent = '#0000FF';
-
-	// Geo Provinces
-	colors.oceanCrust = '#99CCFF';
-	colors.craton = '#FF99FF';
-	colors.orogen = '#66FFB2';
-	colors.basin = '#9999FF';
-
-  // Temperatures
-  colors.hot = '#FF9933';
-  colors.cold = '#66B2FF';
-
-  // Biomes
-  // ocean already decalred
-  colors.marsh = '#37B570';
-  colors.ice = '#D6FFFF';
-  colors.beach = '#F8EFBD';
-  colors.snow = '#FFF3FC';
-  colors.tundra ='#B9D271';
-  colors.bare = '#B5AD8B';
-  colors.taiga = '#A8C95F';
-  colors.shrubland = '#A3CA7C';
-  colors['temperate desert'] = '#E8DF91';
-  colors['temperate rainforest'] = '#45B33B';
-  colors['temperate deciduous'] = '#7BC16E';
-  colors.grassland = '#ADD37D';
-  colors['tropical rainforest'] = '#23A336';
-  colors['tropical seasonal forest'] = '#57BB57';
-  colors['subtropic desert'] = '#F4EEA4';
-
-
   // Run the map generator
-
-  // Clear the data.screen
-  data.screen.fillStyle = colors.white;
-  data.screen.fillRect(0, 0, canvas.width, canvas.height);
 
   setUp();
 
@@ -173,20 +170,27 @@ function render() {
 
   if (data.drawMap == 'color') {
     drawMap();
+    draw3d(true, true, false, biomeColoring);
   } else if (data.drawMap == 'biome') {
     drawBiomes();
+    draw3d(false, true, false, biomeColoring);
   } else if (data.drawMap == 'groProvinces') {
     drawGeoProvinces();
+    draw3d(false, false, true, geoProvinceColoring);
   } else if (data.drawMap == 'elevation') {
+    draw3d(false, false, true, elevationColoring);
     drawElevation();
   } else if (data.drawMap == 'moisture') {
     drawMoisture();
+    draw3d(false, false, true, moistureColoring);
   } else if (data.drawMap == 'temperature') {
     drawTemperature();
+    draw3d(false, false, true, temperatureColoring);
   } else if (data.drawMap == 'livingCondition') {
     drawLivingCondition();
+    draw3d(false, false, true, livingConditionsColoring);
   } else if (data.drawMap == 'render') {
-    draw3d();
+    draw3d(true, true, false, biomeColoring);
   } else {
     print(data.drawMap + ' is not found.');
   }
@@ -540,6 +544,25 @@ function setUp3d() {
   data.light2d.position.set(0, 0, -1);
 
   data.removeableItems = [];
+
+  setUpGUI();
+}
+
+function setUpGUI() {
+  // var gui = new DAT.GUI({
+  //   height : 5 * 32 - 1
+  // });
+
+  // var params = {
+  //   'Point Seed' : data.pSeed,
+  //   'Map Seed' : data.mSeed,
+  //   'Number of Points': data.numPoints,
+  //   'Width': data.width,
+  //   'Height': data.height
+  // };
+
+  // gui.add(params, 'Point Seed');
+  // gui.add(params, 'Map Seed');
 }
 
 function light2d() {
@@ -572,19 +595,35 @@ function addToScene(obj) {
   data.removeableItems.push(obj);
 }
 
-function draw2d() {
+//------------------------------------------------------------------------------
+// Helper function used to render the map using Three js and WebGL
+// Clears the screen and renders to the active screen renderer according to the
+// input parameters and coloring function
+//
+// params:
+//  r3d (Bool): Render in 3D if true, else render flat 2D representation
+//  drawRivers (Bool): Param to determine if rivers are drawn
+//  drawCoast (Bool): Param to determine if the coast is outlined
+//  colorFn (function): function that determines the vertex colors
+//    function(center, corner1, corner2):
+//      returns [center color, c1 color, c2 color] (THREE.Color)
 
-}
-
-function draw3d() {
+function draw3d(r3d, drawRivers, drawCoast, colorFn) {
+  // Remove all the old objects in the scene
   clean();
 
-  light3d();
+  // Show either a 3D or 2D representation of the map
+  var eleScale;
+  if (r3d) {
+    light3d();
+    eleScale = 50;
+  } else {
+    light2d();
+    eleScale = 0;
+  }
 
-  var eleScale = 50;
-
-  // Create Terrain
-  var geometry = new THREE.Geometry();
+  // Create the terrain mesh from the data.map object
+  var terrainGeo = new THREE.Geometry();
   var vert = 0;
 
   for (var i = 0; i < data.map.centers.length; i++) {
@@ -594,29 +633,25 @@ function draw3d() {
       var c1 = center.corners[k];
       var c2 = center.corners[(k+1) % center.corners.length];
 
-      geometry.vertices.push(
+      terrainGeo.vertices.push(
+        new THREE.Vector3(center.position.x, center.position.y, center.elevation * eleScale),
         new THREE.Vector3(c1.position.x, c1.position.y, c1.elevation * eleScale),
-        new THREE.Vector3(c2.position.x, c2.position.y, c2.elevation * eleScale),
-        new THREE.Vector3(center.position.x, center.position.y, center.elevation * eleScale)
+        new THREE.Vector3(c2.position.x, c2.position.y, c2.elevation * eleScale)
       );
 
-      var color = new THREE.Color(colors[center.biome]);
-
       var face = new THREE.Face3(vert, vert+1, vert+2);
-      face.vertexColors = [
-        color, color, color
-        // new THREE.Color(colors[c1.biome]),
-        // new THREE.Color(colors[c2.biome]),
-        // new THREE.Color(colors[center.biome])
-      ];
-      geometry.faces.push(face);
+      // Get colors from the color function
+      var vertColors = colorFn(center, c1, c2);
+      face.vertexColors = vertColors;
+
+      terrainGeo.faces.push(face);
       vert += 3;
     }
   }
-  geometry.mergeVertices();
-  geometry.computeFaceNormals();
+  terrainGeo.mergeVertices();
+  terrainGeo.computeFaceNormals();
 
-  var material = new THREE.MeshPhongMaterial (
+  var terrainMat = new THREE.MeshPhongMaterial (
     {
       color: 0xffffff,
       shading: THREE.FlatShading,
@@ -624,28 +659,101 @@ function draw3d() {
     }
   );
 
-  var terrain = new THREE.Mesh(geometry, material);
+  var terrain = new THREE.Mesh(terrainGeo, terrainMat);
   addToScene(terrain);
 
-  // Add rivers to scene
-  var riverGeom = new THREE.Geometry();
-  vert = 0;
+  // Draw the rivers and coast border
+  if (drawRivers || drawCoast) {
+    var riverVert = 0;
+    var riverGeom = new THREE.Geometry();
 
-  for (var i = 0;  i < data.map.edges.length; i++) {
-    var edge = data.map.edges[i];
-    var v0 = edge.v0;
-    var v1 = edge.v1;
-    if (edge.river) {
-      riverGeom.vertices.push(
-        new THREE.Vector3(v0.position.x, v0.position.y, v0.elevation * eleScale),
-        new THREE.Vector3(v1.position.x, v1.position.y, v1.elevation * eleScale)
-      );
+    var coastVert = 0;
+    var coastGeom = new THREE.Geometry();
+
+    for (var i = 0;  i < data.map.edges.length; i++) {
+      var edge = data.map.edges[i];
+      var v0 = edge.v0;
+      var v1 = edge.v1;
+      if (drawRivers && edge.river) {
+        riverGeom.vertices.push(
+          new THREE.Vector3(v0.position.x, v0.position.y, v0.elevation * eleScale),
+          new THREE.Vector3(v1.position.x, v1.position.y, v1.elevation * eleScale)
+        );
+      } else if (drawCoast && edge.coast) {
+        coastGeom.vertices.push(
+          new THREE.Vector3(v0.position.x, v0.position.y, v0.elevation * eleScale),
+          new THREE.Vector3(v1.position.x, v1.position.y, v1.elevation * eleScale)
+        );
+      }
     }
-  }
-  var riverMat = new THREE.LineBasicMaterial( { color: colors.water, linewidth: 3 } );
-  var line = new THREE.LineSegments(riverGeom, riverMat);
+    if (drawRivers) {
+      var riverMat = new THREE.LineBasicMaterial( { color: colors.water, linewidth: 3 } );
+      var rivers = new THREE.LineSegments(riverGeom, riverMat);
+      addToScene(rivers);
+    }
+    if (drawCoast) {
+      var coastMat = new THREE.LineBasicMaterial( { color: colors.lightGray, linewidth: 3 } );
+      var coast = new THREE.LineSegments(coastGeom, coastMat);
+      addToScene(coast);
+    }
 
-  addToScene(line);
+  }
 
   renderScene();
 }
+
+//------------------------------------------------------------------------------
+// Helper function for map coloring
+// Returns a function for that terrain rendering function that colors a map from
+// low color to high color based on a property that should be a
+// range from 0 to 1
+//
+// params:
+//    low (String): Hex color for the low color range
+//    high (String): Hex color for the high color range
+//    prop (String): Property to base the coloring range on
+//
+// returns: (function) the coloring function to be sent to the terrain rendering
+
+function rampColoring(low, high, prop) {
+  function colorFn(center, c1, c2) {
+    return [
+      new THREE.Color( Util.lerpColor(low, high, center[prop]) ),
+      new THREE.Color( Util.lerpColor(low, high, c1[prop]) ),
+      new THREE.Color( Util.lerpColor(low, high, c2[prop]) )
+    ];
+  };
+  return colorFn
+}
+
+function biomeColoring(center, c1, c2) {
+  if (center.ocean && (!c1.ocean || !c2.ocean)) {
+    var color = new THREE.Color(colors[center.biome]);
+    return [color, color, color];
+  }
+  return [
+    new THREE.Color(colors[center.biome]),
+    new THREE.Color(colors[c1.biome]),
+    new THREE.Color(colors[c2.biome])
+  ];
+}
+
+function geoProvinceColoring(center, c1, c2) {
+  if (center.ocean && (!c1.ocean || !c2.ocean)) {
+    var color = new THREE.Color(colors[center.geoProvince]);
+    return [color, color, color];
+  }
+  return [
+    new THREE.Color(colors[center.geoProvince]),
+    new THREE.Color(colors[c1.geoProvince]),
+    new THREE.Color(colors[c2.geoProvince])
+  ];
+}
+
+elevationColoring = rampColoring(colors.black, colors.white, 'elevation');
+
+moistureColoring = rampColoring(colors.coast, colors.land, 'moisture');
+
+temperatureColoring = rampColoring(colors.cold, colors.hot, 'temperature');
+
+livingConditionsColoring = rampColoring(colors.bad, colors.good, 'livingCondition');

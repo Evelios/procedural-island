@@ -2,9 +2,13 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 
 	// Tuneable parameters
 	this.lakeThreshold = 0.3; // Fraction of water corners for water polygon
+	this.graphRelaxations = 0;
 
 	// Function that dictates land vs. water tiles
 	this.islandShape = this.perlinIslandShape;
+
+	// Point generation function
+	this.pointFunction = this.generatePoissonPoints;
 
 	this.width = width;
 	this.height = height;
@@ -39,6 +43,7 @@ Map.prototype.generateMap = function() {
 	// Elevations
 	this.assignCornerElevations();
 	this.redistributeElevations(this.landCorners());
+	this.fixLakeElevation();
 	this.assignPolygonAverage('elevation');
 
 	// Assign Moisture
@@ -112,6 +117,15 @@ Map.prototype.generateRandomPoints = function(length) {
 	return points;
 }
 
+Map.prototype.generatePoissonPoints = function(length) {
+	// This frequency gives and approximation to the correct number of points
+	var freq = Math.sqrt(this.width * this.height / length / 1.7);
+	var dist = freq;
+	var sampler = new PoissonDiskSampler(this.width, this.height, freq, dist);
+	var solution = sampler.sampleUntilSolution();
+	return solution;
+}
+
 //------------------------------------------------------------------------------
 // Helper function for the map object, it averages a property of the corners
 // and assigns it to the polyon centers
@@ -160,10 +174,10 @@ Map.prototype.generateDiagram = function(points, relaxations) {
 Map.prototype.generateTiles = function() {
 
 	// Tuneable parameter
-	var relaxations = 4;
 
-	var points = this.generateRandomPoints(this.numPoints);
-	var diagram = this.generateDiagram(points, relaxations);
+	var points = this.pointFunction(this.numPoints);
+
+	var diagram = this.generateDiagram(points, this.graphRelaxations);
 
 	this.centers = diagram.centers;
 	this.corners = diagram.corners;
@@ -658,6 +672,35 @@ Map.prototype.redistributeElevations = function(locations) {
 }
 
 //------------------------------------------------------------------------------
+// This function reassigns the lake elevations to make a flat lake
+// It works by setting the elevation of a lake to it's lowest point
+
+Map.prototype.fixLakeElevation = function() {
+	var queue = [];
+
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+
+		if (corner.water && !corner.ocean) {
+			queue.push(corner);
+		}
+	}
+
+	while (queue.length != 0) {
+		var corner = queue.shift();
+
+		for (var i = 0; i < corner.adjacent.length; i++) {
+			var adj = corner.adjacent[i];
+
+			if (adj.elevation < corner.elevation) {
+				adj.elevation = corner.elevation;
+				queue.push(adj);
+			}
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
 // For every corner we calculate its downslope. That is a pointer that
 // refrences to the corner that is at a lower elevation than itself, if there
 // is no downslope point, the pointer points to itself
@@ -781,8 +824,8 @@ Map.prototype.getTemperature = function(point) {
 	var xPeriod = this.temp.xPeriod;
 	var yPeriod = 1;
 	var turbPower = 1;
-	var turbSize = 32;
-	var scaleFactor = 100;
+	var turbSize = 16;
+	var scaleFactor = 50;
 
 	var xy = xPeriod * x + yPeriod * y;
 

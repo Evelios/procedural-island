@@ -37,6 +37,9 @@ Culture.assignCornerLivingConditions = function(map) {
 }
 
 //------------------------------------------------------------------------------
+// Pick a number of random positions for a town to be created. If the tile is a
+// land tile, make a roll to see if the town is created. Check the roll against
+// the living conditions of that tile. If the roll succeed, create a town there
 
 Culture.createTowns = function(map) {
 	var numTowns = 200;

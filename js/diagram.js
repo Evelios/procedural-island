@@ -1,3 +1,32 @@
+//------------------------------------------------------------------------------
+//
+// Diagram class
+//  The Diagram class is an extenstion of the voronoi Diagram. It turns the
+//  diagram into a more useable format where centers, edges, and corners are
+//  better connected. This allows for many different types of traversal over
+//  the graph. This class uses the rhill-voronoi library for building the
+//  voronoi graph.
+//
+//  Constructor(points, bbox, relaxations):
+//    points (List<Vector>): The list of points to construct the voronoi diagram
+//    bbox (Object(Number)): {xl, xr, yt, yb}, locations of the bounding box
+//      in which the voronoi diagram is created
+//    relaxations (Number): The number of times that the Lloyd relaxations is
+//      performed on the voronoi diagram. The relaxation improves the spacing
+//      between the input points
+//
+//  Diagram Object:
+//    .bboc (Object(Number)): The input bounding box
+//    .centers (List<Center>): All the center objects of the diagram
+//    .edges (List<Edge>): All the center objects of the diagram
+//    .corners (List<Corner>): All the center objects of the diagram
+//
+//  Issues:
+//    Both the improveCorners and the sortCorners functions take up a lot of
+//    processing time. Because of this, improveCorners is not called.
+//
+//------------------------------------------------------------------------------
+
 var Center = function(pos) {
   this.id = -1;
   this.position = pos;

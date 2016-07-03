@@ -64,8 +64,10 @@ Map.prototype.generateMap = function() {
 
 //------------------------------------------------------------------------------
 // Helper function to get list representations of the map data
+// This function is used to get all the land corners in the diagram
 //
 // returns (list<Corners>): All land corners from the diagram
+
 Map.prototype.landCorners = function() {
   var locations = [];
   for (var i = 0; i < this.corners.length; i++) {
@@ -79,6 +81,8 @@ Map.prototype.landCorners = function() {
 
 //------------------------------------------------------------------------------
 // Helper function to get the edge that contains the two corner points
+// This function takes two corners and tries to find the edge that connects
+// the two corners
 //
 // params:
 //	c1 (Corner): The first possible corner connected to an edge
@@ -117,6 +121,18 @@ Map.prototype.generateRandomPoints = function(length) {
 	return points;
 }
 
+//------------------------------------------------------------------------------
+// Helper function to generate poisson destributed points for creating the
+// diagram. This creates blue noise randomness and does not require any
+// relaxations of the voronoi diagram.
+//
+// params:
+// 		length (Number): length of the list to be generated
+//
+// return (list<Vector>): a list of random points of approximately {length}
+//	due to the nature of the Poisson point generation, it is not possible to
+//	generate exactly a particular number of points
+
 Map.prototype.generatePoissonPoints = function(length) {
 	// This frequency gives and approximation to the correct number of points
 	var freq = Math.sqrt(this.width * this.height / length / 1.7);
@@ -128,7 +144,7 @@ Map.prototype.generatePoissonPoints = function(length) {
 
 //------------------------------------------------------------------------------
 // Helper function for the map object, it averages a property of the corners
-// and assigns it to the polyon centers
+// and assigns it to the polyon centers.
 //
 // params:
 //		prop (String): The property that is being averaged to the polygon
@@ -194,7 +210,7 @@ Map.prototype.generateTiles = function() {
 //
 // return: (Number): The distance from the edge of the map
 
-// This function needs fixing? The value is range limited to 0-1
+// This function needs fixing? The value should be range limited to 0-1
 
 Map.prototype.gradient = function(pos) {
   var center = new Vector(this.width / 2, this.height / 2);
@@ -205,8 +221,12 @@ Map.prototype.gradient = function(pos) {
   return delta;
 }
 
+//------------------------------------------------------------------------------
 // Helper function to create the land tiles
+// Creates an island shape based off of the perlin noise algorithm.
+//
 // return (bool): true if position is land, false otherwise
+
 Map.prototype.perlinIslandShape = function(pos) {
 	// Tuneable parameters
   var threshold = 0.1;
@@ -219,6 +239,12 @@ Map.prototype.perlinIslandShape = function(pos) {
   height -= gradient * gradient;
   return height > threshold;
 }
+
+//------------------------------------------------------------------------------
+// Helper function to create the land tiles
+//	Creates land masses based off the perlin noise algorithm.
+//
+// return (bool): true if position is land, false otherwise
 
 Map.prototype.perlinLandShape = function(pos) {
 	// Tuneable parameters
@@ -242,7 +268,6 @@ Map.prototype.perlinLandShape = function(pos) {
 // center tiles and corner points. Ocean tiles are water tiles that are
 // connected to the border of the map. Coast tiles are tiles that have a
 // neighbors that are ocean tiles and land tiles
-
 
 Map.prototype.assignOceanCoastAndLand = function() {
 
@@ -349,7 +374,6 @@ Map.prototype.assignOceanCoastAndLand = function() {
 // plates. The boundary type is then determined by the relative direction of
 // the plates. There are three boundary types, convergent, divergent, and
 // transform.
-
 
 Map.prototype.generateTectonicPlates = function() {
 
@@ -496,6 +520,12 @@ Map.prototype.generateTectonicPlates = function() {
 }
 
 //------------------------------------------------------------------------------
+// Assign Geological Provinces based off the plate boundaries
+// 'orogen' provinces are located near convergen boundaries.
+// 'basin' provinces are located just outside orogen boundaries and near
+//	convergent land boundaries
+// 'craton' provinces are all the other land tiles
+// 'ocean' provinces are allt the ocean tiles
 
 Map.prototype.assignCornerGeoProvinces = function() {
 
@@ -553,6 +583,8 @@ Map.prototype.assignCornerGeoProvinces = function() {
 }
 
 //------------------------------------------------------------------------------
+// Assign polygon geological provinces based on which province is most common
+// among the tiles corner provinces
 
 Map.prototype.assignPolygonGeoProvinces = function() {
 	// Polygon is the most common province of all its corners
@@ -584,6 +616,11 @@ Map.prototype.assignPolygonGeoProvinces = function() {
 }
 
 //------------------------------------------------------------------------------
+// Corner elevations are based upon the distance from the coast in three
+// step values, for the three different geological provinces.
+// The largest step value is for the orogen province, medium for the cratorn,
+// and the smallest for the basin and lake tiles. Oceans are assigned an
+// elevation of 0.
 
 Map.prototype.assignCornerElevations = function() {
 	var queue = [];
@@ -647,6 +684,7 @@ Map.prototype.assignCornerElevations = function() {
 // elevations. Speciffically, we want the elevation X to have frequency (1 - x)
 // To do this we will sort the corners, then set each corner to its desired
 // elevation
+
 Map.prototype.redistributeElevations = function(locations) {
   // scaleFactor increases the mountain area so that is is more visible
   var scaleFactor = 1.1;
@@ -752,6 +790,8 @@ Map.prototype.createRivers = function() {
 }
 
 //------------------------------------------------------------------------------
+// Corner moisture is based on the distance a tile is from fresh water, being
+// lakes and rivers.
 
 Map.prototype.assignCornerMoisture = function() {
 
@@ -794,7 +834,8 @@ Map.prototype.assignCornerMoisture = function() {
 }
 
 //------------------------------------------------------------------------------
-// Redestribute moisture to be evenly destributed
+// Redestribute moisture to be linearly distributed. This gives an even
+// distribution of moist and arid tiles.
 
 Map.prototype.redistributeMoisture = function(locations) {
   locations.sort(Util.propComp('moisture'));
@@ -804,7 +845,15 @@ Map.prototype.redistributeMoisture = function(locations) {
 }
 
 //------------------------------------------------------------------------------
-// Helper function to assign the moisture of all the corners
+// Helper function to assign the temperature given a location. The function
+// is a cosine function from top to bottom for cold-hot-cold distribution.
+// The width and starting location of the function is random, and it is further
+// purturbed by another noise function to add more variety in the temperature.
+//
+// params:
+//		point(Vector): The position to sample the temperature function at
+//
+// returns (Number): The temperature at that point in the range from 0 - 1
 
 Map.prototype.getTemperature = function(point) {
 
@@ -848,6 +897,8 @@ Map.prototype.getTemperature = function(point) {
 }
 
 //------------------------------------------------------------------------------
+// Initilize the parameters for the temperature function and then assign all
+// the corner temperatures basd on that function.
 
 Map.prototype.assignCornerTemperatures = function() {
 
@@ -862,8 +913,7 @@ Map.prototype.assignCornerTemperatures = function() {
 	var halfTransf = this.temp.transform / 2;
 	// Center the transform and move across the possible period of the function
 	// The outputs are skewed towards the center of the range
-	this.temp.translation = -halfTransf +// Util.randRange(-halfTransf, halfTransf);
-		// Math.cbrt(Util.randRange(-Math.pow(halfTransf, 3), Math.pow(halfTransf, 3)));
+	this.temp.translation = -halfTransf +
 		Math.pow(Util.randRange(-Math.cbrt(halfTransf), Math.cbrt(halfTransf)), 3);
 
 	// Get individual polygon temperatures
@@ -878,6 +928,7 @@ Map.prototype.assignCornerTemperatures = function() {
 
 //------------------------------------------------------------------------------
 // Get the biome based on the elevation and temperature data in the polygon
+// Biomes are based on a modified Whittaker diagram
 
 Map.prototype.getBiome = function(center) {
 	var moisture = center.moisture;
@@ -917,6 +968,7 @@ Map.prototype.getBiome = function(center) {
 }
 
 //------------------------------------------------------------------------------
+// Assign corner biomes based off of the Whittaker diagram
 
 Map.prototype.assignCornerBiomes = function() {
 	for (var i = 0; i < this.corners.length; i++) {
@@ -927,6 +979,7 @@ Map.prototype.assignCornerBiomes = function() {
 }
 
 //------------------------------------------------------------------------------
+// Assign center biomes based off of the Whittaker diagram
 
 Map.prototype.assignCenterBiomes = function() {
 	for (var i = 0; i < this.centers.length; i++) {

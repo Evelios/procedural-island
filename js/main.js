@@ -513,6 +513,10 @@ function drawDiagram(delaunay) {
 //
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+// Set up the WebGL renderer and necessary renderin objects for displaying
+// the map
+
 function setUp3d() {
   // Init
   data.scene = new THREE.Scene();
@@ -548,6 +552,9 @@ function setUp3d() {
   setUpGUI();
 }
 
+//------------------------------------------------------------------------------
+// Initilize the gui with all the tuneable parameters
+
 function setUpGUI() {
   // var gui = new DAT.GUI({
   //   height : 5 * 32 - 1
@@ -565,6 +572,9 @@ function setUpGUI() {
   // gui.add(params, 'Map Seed');
 }
 
+//------------------------------------------------------------------------------
+// Functions called to add different lighting setups to the scene
+
 function light2d() {
   addToScene(data.light2d);
 }
@@ -574,9 +584,14 @@ function light3d() {
   addToScene(data.ambient);
 }
 
+//------------------------------------------------------------------------------
+// Function to render the WebGL scene
+
 function renderScene() {
   data.renderer.render( data.scene, data.camera );
 }
+
+//------------------------------------------------------------------------------
 
 // Removing old items from the scene
 // http://stackoverflow.com/questions/37762961/three-js-proper-removing-object-from-scene-still-reserved-in-heap
@@ -726,6 +741,10 @@ function rampColoring(low, high, prop) {
   return colorFn
 }
 
+//------------------------------------------------------------------------------
+//        Map Colorings
+//------------------------------------------------------------------------------
+
 function biomeColoring(center, c1, c2) {
   if (center.ocean && (!c1.ocean || !c2.ocean)) {
     var color = new THREE.Color(colors[center.biome]);
@@ -757,3 +776,12 @@ moistureColoring = rampColoring(colors.coast, colors.land, 'moisture');
 temperatureColoring = rampColoring(colors.cold, colors.hot, 'temperature');
 
 livingConditionsColoring = rampColoring(colors.bad, colors.good, 'livingCondition');
+
+
+//------------------------------------------------------------------------------
+//        Map Overlays
+//------------------------------------------------------------------------------
+
+function addTowns() {
+
+}

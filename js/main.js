@@ -68,21 +68,21 @@ function main() {
 
   // Biomes
   // ocean already decalred
-  colors.marsh = '#36692F';
-  colors.ice = '#CCFFFF';
-  colors.beach = '#FFF7D0';
+  colors.marsh = '#37B570';
+  colors.ice = '#D6FFFF';
+  colors.beach = '#F8EFBD';
   colors.snow = '#FFF3FC';
-  colors.tundra ='#B7C06F';
+  colors.tundra ='#B9D271';
   colors.bare = '#B5AD8B';
-  colors.taiga = '#8FA75A';
-  colors.shrubland = '#93A66C';
-  colors['temperate desert'] = '#D9D272';
-  colors['temperate rainforest'] = '#2B9736';
-  colors['temperate deciduous'] = '#549449';
-  colors['tropical rainforest'] = '#36972B';
-  colors['tropical seasonal forest'] = '#5E9D5E';
-  colors.grassland = '#A3C974';
-  colors['subtropic desert'] = '#FFF799';
+  colors.taiga = '#A8C95F';
+  colors.shrubland = '#A3CA7C';
+  colors['temperate desert'] = '#E8DF91';
+  colors['temperate rainforest'] = '#45B33B';
+  colors['temperate deciduous'] = '#7BC16E';
+  colors.grassland = '#ADD37D';
+  colors['tropical rainforest'] = '#23A336';
+  colors['tropical seasonal forest'] = '#57BB57';
+  colors['subtropic desert'] = '#F4EEA4';
 
 
   // Run the map generator
@@ -520,24 +520,35 @@ function setUp3d() {
 
   data.camera.position.x = data.width;
   data.camera.position.y = data.height;
-  data.camera.position.z = 200;
+  data.camera.position.z = 100;
   // camera.position.z = cameraHeight;
 
 
-  data.renderer = new THREE.WebGLRenderer();
+  data.renderer = new THREE.WebGLRenderer( { antialias: true } );
   data.renderer.setSize(data.width, data.height);
   var div = document.getElementById('jsHook');
   div.appendChild(data.renderer.domElement);
 
   // Lights
-  var ambient = new THREE.AmbientLight( 0x404040 );
-  data.scene.add(ambient);
-  var light = new THREE.DirectionalLight( 0xffffff );
-	light.position.set( 1, 1, -1);
-  light.castShadow = true;
-  data.scene.add(light);
+  data.ambient = new THREE.AmbientLight( 0xffffff , 0.3 );
+
+  data.light3d = new THREE.DirectionalLight( 0xffffff );
+	data.light3d.position.set( 1, 1, -1);
+  data.light3d.castShadow = true;
+
+  data.light2d = new THREE.DirectionalLight( 0xffffff );
+  data.light2d.position.set(0, 0, -1);
 
   data.removeableItems = [];
+}
+
+function light2d() {
+  addToScene(data.light2d);
+}
+
+function light3d() {
+  addToScene(data.light3d);
+  addToScene(data.ambient);
 }
 
 function renderScene() {
@@ -561,10 +572,16 @@ function addToScene(obj) {
   data.removeableItems.push(obj);
 }
 
+function draw2d() {
+
+}
+
 function draw3d() {
   clean();
 
-  var eleScale = 20;
+  light3d();
+
+  var eleScale = 50;
 
   // Create Terrain
   var geometry = new THREE.Geometry();
@@ -583,11 +600,14 @@ function draw3d() {
         new THREE.Vector3(center.position.x, center.position.y, center.elevation * eleScale)
       );
 
+      var color = new THREE.Color(colors[center.biome]);
+
       var face = new THREE.Face3(vert, vert+1, vert+2);
       face.vertexColors = [
-        new THREE.Color(colors[c1.biome]),
-        new THREE.Color(colors[c2.biome]),
-        new THREE.Color(colors[center.biome])
+        color, color, color
+        // new THREE.Color(colors[c1.biome]),
+        // new THREE.Color(colors[c2.biome]),
+        // new THREE.Color(colors[center.biome])
       ];
       geometry.faces.push(face);
       vert += 3;
@@ -596,7 +616,7 @@ function draw3d() {
   geometry.mergeVertices();
   geometry.computeFaceNormals();
 
-  var material = new THREE.MeshPhongMaterial(
+  var material = new THREE.MeshPhongMaterial (
     {
       color: 0xffffff,
       shading: THREE.FlatShading,
@@ -606,6 +626,26 @@ function draw3d() {
 
   var terrain = new THREE.Mesh(geometry, material);
   addToScene(terrain);
+
+  // Add rivers to scene
+  var riverGeom = new THREE.Geometry();
+  vert = 0;
+
+  for (var i = 0;  i < data.map.edges.length; i++) {
+    var edge = data.map.edges[i];
+    var v0 = edge.v0;
+    var v1 = edge.v1;
+    if (edge.river) {
+      riverGeom.vertices.push(
+        new THREE.Vector3(v0.position.x, v0.position.y, v0.elevation * eleScale),
+        new THREE.Vector3(v1.position.x, v1.position.y, v1.elevation * eleScale)
+      );
+    }
+  }
+  var riverMat = new THREE.LineBasicMaterial( { color: colors.water, linewidth: 3 } );
+  var line = new THREE.LineSegments(riverGeom, riverMat);
+
+  addToScene(line);
 
   renderScene();
 }

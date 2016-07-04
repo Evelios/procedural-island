@@ -6,18 +6,23 @@ html, body {
 }
 
 body {
-	background-color: #BBB;
+	background-color: #4864DB;
+}
+
+canvas {
+  border: 1px solid #AAA;
 }
 
 .wrapper {
+  padding: 100px;
 }
 
-.buttons {
-  padding: 20px;
+.Aligner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#jsHook {
-  width: 100%;
-  height: 100%;
-  text-align: center;
+.Aligner-item {
+  max-width: 50%;
 }

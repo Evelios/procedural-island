@@ -43,11 +43,11 @@ Map.prototype.generateMap = function() {
 	// Elevations
 	this.assignCornerElevations();
 	this.redistributeElevations(this.landCorners());
+	this.calculateDownslopes();
 	this.fixLakeElevation();
 	this.assignPolygonAverage('elevation');
 
 	// Assign Moisture
-  this.calculateDownslopes();
   this.createRivers();
 	this.assignCornerMoisture();
 	this.redistributeMoisture(this.landCorners());
@@ -730,7 +730,7 @@ Map.prototype.fixLakeElevation = function() {
 		for (var i = 0; i < corner.adjacent.length; i++) {
 			var adj = corner.adjacent[i];
 
-			if (adj.elevation < corner.elevation) {
+			if (corner.water && adj.elevation < corner.elevation) {
 				adj.elevation = corner.elevation;
 				queue.push(adj);
 			}
@@ -922,7 +922,7 @@ Map.prototype.assignCornerTemperatures = function() {
 		var corner = this.corners[i];
 
 		var temp = this.getTemperature(corner.position);
-		corner.temperature = temp * (0.66 + (1 - corner.elevation) / 3);
+		corner.temperature = temp * (0.5 + (1 - corner.elevation) / 2);
 	}
 }
 

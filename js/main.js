@@ -1,7 +1,7 @@
 data = {};
 
-colors = {};
 // Color Assignments
+colors = {};
 
 // Others
 colors.black = '#000000';
@@ -56,451 +56,126 @@ colors['subtropic desert'] = '#F4EEA4';
 // Main Function Call
 
 function main() {
-
-  // Grab the div hook and insert a blank html canvas
-  var div = document.getElementById('jsHook');
-  var canvas = document.createElement('canvas');
-  div.appendChild(canvas);
-
-  canvas.id = 'canvas';
-  canvas.height = 400;
-  canvas.width = 800;
-  data.canvas = canvas;
-  data.height = canvas.height;
-  data.width = canvas.width;
-  document.getElementById('height').value = data.height;
-  document.getElementById('width').value = data.width;
+  data.width = 800;
+  data.height = 400;
 
   data.numPoints = 1000;
-  document.getElementById('numPoints').value = data.numPoints;
 
   data.maxSeed = 65536;
   data.pointSeed = 0;
   data.mapSeed = 0;
+  data.currPSeed = data.pointSeed;
+  data.currMSeed = data.pointMap;
+  randSeeds();
 
-  // data.fov = 60;
+  // Rendering Properties
+  data.render = {};
+  data.render.mapTypes = ['Biome', 'Geological Provinces','Elevation', 'Moisture',
+    'Temperature', 'Living Conditions'];
+  data.render.map = data.render.mapTypes[0];
 
-  var backgroundColor = 'white';
-  var screen = canvas.getContext('2d');
-  data.screen = screen;
+  data.render.draw3d = true;
+  data.render.smooth = true;
+  data.render.plateBoundaries = false;
+  data.render.towns = false;
 
   setUp3d();
 
+
+
+  setUpGUI();
+
   // Run the map generator
+  generate();
 
-  setUp();
-
-  generateRandom();
 }
 
-function setUp() {
-  var form = document.getElementById('form');
-  var elements = form.elements;
+//------------------------------------------------------------------------------
+// Initilize the gui with all the tuneable parameters
 
-  for ( var i = 0; i < form.elements.length; i++ ) {
-    var e = elements[i];
-    if (e.type != 'Number') {
-      elements[i].onchange = function() {
-        update();
-      }
-    }
-  }
+function setUpGUI() {
+  var gui = new dat.GUI();
+
+  var functions = {
+    'Generate Map': generate,
+    'Generate Random': generateRandom,
+  };
+
+  gui.add(functions, 'Generate Map');
+  gui.add(functions, 'Generate Random');
+
+  var paramsFolder = gui.addFolder('Parameters');
+
+  paramsFolder.add(data, 'pointSeed').name('Point Seed');
+  paramsFolder.add(data, 'mapSeed').name('Map Seed');
+  paramsFolder.add(data, 'numPoints').name('Number of Points');
+  paramsFolder.add(data, 'width').name('Width');
+  paramsFolder.add(data, 'height').name('Height');
+
+  var rendFolder = gui.addFolder('Rendering');
+
+  rendFolder.add(data.render, 'map', data.render.mapTypes).name('Map Types').onChange(render);
+  rendFolder.add(data.render, 'draw3d').name('Draw 3D').onChange(render);
+  rendFolder.add(data.render, 'smooth').name('Smooth').onChange(render);
+  rendFolder.add(data.render, 'plateBoundaries').name('Plate Boundaries').onChange(render);
+  rendFolder.add(data.render, 'towns').name('Towns').onChange(render);
 }
 
-function update() {
-  readForm();
-  render();
-}
-
-function readForm() {
-  var form = document.getElementById('form');
-  var elements = form.elements;
-
-  for ( var i = 0; i < form.elements.length; i++ ) {
-    var e = form.elements[i];
-    var value = e.type == 'checkbox' ? e.checked : e.value;
-    var value = parseInt(value) ? parseInt(value) : value;
-    var name = e.name;
-
-    if (e.type == 'radio') {
-      if (e.checked) {
-        data[name] = value;
-      }
-    } else {
-      data[name] = value;
-    }
-
-  }
-}
-
+//------------------------------------------------------------------------------
 // Generation Functions
 
+function randSeeds() {
+  data.pointSeed = Util.randInt(0, data.maxSeed);
+  data.mapSeed = Util.randInt(0, data.maxSeed);
+}
+
 function generateRandom() {
-
-  var pointSeed = Util.randInt(0, data.maxSeed);
-  document.getElementById('pointSeed').value = pointSeed;
-
-  var mapSeed = Util.randInt(0, data.maxSeed);
-  document.getElementById('mapSeed').value = mapSeed;
-
-  createMap(pointSeed, mapSeed);
+  randSeeds();
+  createMap();
 }
 
 function generate() {
-
-  var pointSeed = parseInt(document.getElementById('pointSeed').value) || 0;
-  var mapSeed = parseInt(document.getElementById('mapSeed').value) || 0;
-
-  createMap(pointSeed, mapSeed);
+  if (data.currPSeed != data.pointSeed || data.currMSeed != data.pointMap) {
+    createMap();
+  }
 }
 
-function createMap(pointSeed, mapSeed) {
-  data.canvas.height = data.height;
-  data.canvas.width = data.width;
+function createMap() {
+  data.currPSeed = data.pointSeed;
+  data.currMSeed = data.mapSeed;
   // Create map
-  data.map = new Map(data.width, data.height, data.numPoints, pointSeed, mapSeed);
+  data.map = new Map(data.width, data.height, data.numPoints,
+    data.pointSeed, data.mapSeed);
   // Run map modules
   Culture.assignCulture(data.map);
-  update();
+  render();
 }
 
+//------------------------------------------------------------------------------
 // Render Functions
 
 function render() {
 
-  if (data.drawMap == 'color') {
-    drawMap();
-    draw3d(true, true, false, biomeColoring);
-  } else if (data.drawMap == 'biome') {
-    drawBiomes();
-    draw3d(false, true, false, biomeColoring);
-  } else if (data.drawMap == 'groProvinces') {
-    drawGeoProvinces();
-    draw3d(false, false, true, geoProvinceColoring);
-  } else if (data.drawMap == 'elevation') {
-    draw3d(false, false, true, elevationColoring);
-    drawElevation();
-  } else if (data.drawMap == 'moisture') {
-    drawMoisture();
-    draw3d(false, false, true, moistureColoring);
-  } else if (data.drawMap == 'temperature') {
-    drawTemperature();
-    draw3d(false, false, true, temperatureColoring);
-  } else if (data.drawMap == 'livingCondition') {
-    drawLivingCondition();
-    draw3d(false, false, true, livingConditionsColoring);
-  } else if (data.drawMap == 'render') {
-    draw3d(true, true, false, biomeColoring);
+  updateRendererProperties();
+
+  // Render a particular map type
+  if (data.render.map == 'Biome') {
+    draw3d(true, false, biomeColoring);
+  } else if (data.render.map == 'Geological Provinces') {
+    draw3d(false, true, geoProvinceColoring);
+  } else if (data.render.map == 'Elevation') {
+    draw3d(false, true, elevationColoring);
+  } else if (data.render.map == 'Moisture') {
+    draw3d(false, true, moistureColoring);
+  } else if (data.render.map == 'Temperature') {
+    draw3d(false, true, temperatureColoring);
+  } else if (data.render.map == 'Living Conditions') {
+    draw3d(false, true, livingConditionsColoring);
   } else {
-    print(data.drawMap + ' is not found.');
+    print(data.render.map + ' is not found.');
   }
 
-  if (data.diagram) {
-    drawDiagram();
-  }
-  if (data.plates) {
-    drawPlates();
-  }
-  if (data.boundaries) {
-    drawPlateBoundaries();
-  }
-  if (data.plateTypes) {
-    drawPlateTypes();
-  }
-  if (data.provinces) {
-    drawProvinces();
-  }
-  if (data.towns) {
-    drawTowns();
-  }
-}
-
-//------------------------------------------------------------------------------
-//
-//        DDDD     RRRR      AAA     W         W
-//        D  DD    R   R    A   A    W         W
-//        D   DD   RRRR     AAAAA     WW  W  WW
-//        D  DD    R  RR   AA   AA     W WWW W
-//        DDDD     R   R   A     A     WW   WW
-//
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-
-function drawCell(cell, color) {
-	var points = []
-	for (var i = 0; i < cell.corners.length; i++) {
-		points.push(cell.corners[i].position);
-	}
-	Draw.polygon(data.screen, points, color, true);
-}
-
-//------------------------------------------------------------------------------
-
-function drawMap() {
-	for (var i = 0; i < data.map.centers.length; i++) {
-		var center = data.map.centers[i];
-		var color;
-
-		if (center.ocean) {
-			color =  colors.ocean;
-		} else if(center.coast) {
-			color =  colors.coast;
-		} else if(center.water) {
-			color = colors.water;
-		} else {
-			color = Util.lerpColor(colors.land, colors.mountain, center.elevation);
-		}
-
-		drawCell(center, color);
-	}
-
-	for (var k = 0; k < data.map.edges.length; k++) {
-		var edge = data.map.edges[k];
-
-		if (edge.river) {
-			Draw.line(data.screen, edge.v0.position, edge.v1.position,
-				colors.water, Math.sqrt(edge.river));
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-// Draw tectonic plates
-
-function drawPlates() {
-	for (var i = 0; i < data.map.plates.centers.length; i++) {
-		var plate = data.map.plates.centers[i];
-		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
-
-		for (var j = 0; j < plate.tiles.length; j++) {
-			var tile = plate.tiles[j];
-			drawCell(tile, color);
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-// Draws the ocean and continental plates colored in with their direction
-
-function drawPlateTypes() {
-	for (var i = 0; i < data.map.plates.centers.length; i++) {
-		var plate = data.map.plates.centers[i];
-		var color = Util.hexToRgb(Util.randHexColor(), 0.5);
-
-		// Draw Oceanic and Continental plates
-		var plateColor;
-		if (plate.plateType < 0.5) {
-			plateColor = Util.hexToRgb(colors.water, 0.5);
-		} else {
-			plateColor = Util.hexToRgb(colors.land, 0.5);
-		}
-		drawCell(plate, plateColor)
-
-		var arrow = plate.position.add(plate.direction.multiply(50));
-		Draw.arrow(data.screen, plate.position, arrow, 'black', 3);
-	}
-}
-
-//------------------------------------------------------------------------------
-// Draws the plate boundaries with their boundary type colored in
-
-function drawPlateBoundaries() {
-
-	for (var i = 0; i < data.map.plates.edges.length; i++) {
-		var edge = data.map.plates.edges[i];
-
-		var arrow = edge.midpoint.add(edge.direction.multiply(30));
-
-		if (edge.boundaryType != null) {
-			var edgeColor;
-			if (edge.boundaryType < 1.0) {
-				edgeColor = Util.lerpColor(colors.convergent, colors.transform, edge.boundaryType);
-			} else {
-				edgeColor = Util.lerpColor(colors.transform, colors.divergent, edge.boundaryType - 1);
-			}
-			Draw.line(data.screen, edge.v0.position, edge.v1.position, edgeColor, 3);
-		} else {
-			Draw.line(data.screen, edge.v0.position, edge.v1.position, colors.gray, 3);
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-
-function drawProvinces() {
-  for (var i = 0; i < data.map.plates.centers.length; i++) {
-		var plate = data.map.plates.centers[i];
-		var color = Util.hexToRgb(Util.randHexColor(), 0.25);
-
-		for (var j = 0; j < plate.tiles.length; j++) {
-			var tile = plate.tiles[j];
-      if (!tile.ocean) {
-        drawCell(tile, color);
-      }
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-
-function drawTowns() {
-  for (var i = 0; i < data.map.towns.length; i++) {
-    var tile = data.map.towns[i];
-    drawCell(tile, Util.randHexColor());
-  }
-}
-
-//------------------------------------------------------------------------------
-// Draw geological provinces
-
-function drawGeoProvinces() {
-  drawMap();
-
-	for (var i = 0; i < data.map.centers.length; i++) {
-		var center = data.map.centers[i];
-    var color = colors[center.geoProvince];
-    color = Util.hexToRgb(color, 0.5);
-		drawCell(center, color)
- 	}
-}
-
-//------------------------------------------------------------------------------
-// Draw elevation
-
-function drawElevation() {
-	for (var i = 0; i < data.map.centers.length; i++) {
-		var center = data.map.centers[i];
-		var color = Util.lerpColor(colors.black, colors.white, center.elevation);
-		drawCell(center, color);
-	}
-
-	for (var i = 0; i < data.map.edges.length; i++) {
-		var edge = data.map.edges[i];
-		var v0 = edge.v0;
-		var v1 = edge.v1;
-		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
-			Draw.line(data.screen, v0.position, v1.position, colors.gray, 1);
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-// Draw moisture
-
-function drawMoisture() {
-	for (var i = 0; i < data.map.centers.length; i++) {
-		var center = data.map.centers[i];
-		var color = Util.lerpColor(colors.coast, colors.land, center.moisture);
-		drawCell(center, color);
-	}
-
-	for (var i = 0; i < data.map.edges.length; i++) {
-		var edge = data.map.edges[i];
-		var v0 = edge.v0;
-		var v1 = edge.v1;
-		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
-			Draw.line(data.screen, v0.position, v1.position, colors.coast);
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-// Draw temperature
-
-function drawTemperature() {
-  for (var i = 0; i < data.map.centers.length; i++) {
-		var center = data.map.centers[i];
-		var color = Util.lerpColor(colors.cold, colors.hot, center.temperature);
-		drawCell(center, color);
-	}
-
-	for (var i = 0; i < data.map.edges.length; i++) {
-		var edge = data.map.edges[i];
-		var v0 = edge.v0;
-		var v1 = edge.v1;
-		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
-			Draw.line(data.screen, v0.position, v1.position, colors.lightGray);
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-
-function drawBiomes() {
-  for (var i = 0; i < data.map.centers.length; i++) {
-		var center = data.map.centers[i];
-    var biome = center.biome;
-		var color = colors[biome];
-		drawCell(center, color);
-	}
-
-	for (var k = 0; k < data.map.edges.length; k++) {
-		var edge = data.map.edges[k];
-
-		if (edge.river) {
-			Draw.line(data.screen, edge.v0.position, edge.v1.position,
-				colors.water, Math.sqrt(edge.river));
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-// Draw Culture living conditions
-
-function drawLivingCondition() {
-  for (var i = 0; i < data.map.centers.length; i++) {
-		var center = data.map.centers[i];
-		var color = Util.lerpColor(colors.bad, colors.good, center.livingCondition);
-		drawCell(center, color);
-	}
-
-	for (var i = 0; i < data.map.edges.length; i++) {
-		var edge = data.map.edges[i];
-		var v0 = edge.v0;
-		var v1 = edge.v1;
-		if (v0.coast && v1.coast && (edge.d0.ocean || edge.d1.ocean) && (!edge.d0.water || !edge.d1.water)) {
-			Draw.line(data.screen, v0.position, v1.position, colors.good);
-		}
-	}
-}
-
-//------------------------------------------------------------------------------
-// Draw the voronoi diagram
-
-function drawDiagram(delaunay) {
-	// Draw Edges
-	for (var i = 0; i < data.map.edges.length; i++) {
-		var edge = data.map.edges[i];
-		var d0 = edge.d0.position;
-		var d1 = edge.d1 ? edge.d1.position : null;
-		var v0 = edge.v0.position;
-		var v1 = edge.v1.position;
-
-		// Draw Voronoi Diagram
-		Draw.line(data.screen, v0, v1, 'blue');
-
-		if (delaunay && d1) {
-		// Draw Delaunay Diagram
-		Draw.line(data.screen, d0, d1, 'yellow')
-	  	}
-	}
-
-	// Draw Center Points
-	for (var i = 0; i < data.map.centers.length; i++) {
-		var center = data.map.centers[i];
-		var pos = center.position;
-		Draw.point(data.screen, pos, 'red');
-	}
-
-	// Draw Corners
-	for (var i = 0; i < data.map.corners; i++) {
-		var corner = data.map.corners[i]
-		var pos = corner.position;
-		Draw.point(data.screen, pos, 'green')
-	}
+  // Render map overlays
 }
 
 //------------------------------------------------------------------------------
@@ -529,7 +204,6 @@ function setUp3d() {
   data.camera.position.x = data.width;
   data.camera.position.y = data.height;
   data.camera.position.z = 100;
-  // camera.position.z = cameraHeight;
 
 
   data.renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -538,7 +212,7 @@ function setUp3d() {
   div.appendChild(data.renderer.domElement);
 
   // Lights
-  data.ambient = new THREE.AmbientLight( 0xffffff , 0.3 );
+  data.ambient = new THREE.AmbientLight( 0xffffff , 0.421 );
 
   data.light3d = new THREE.DirectionalLight( 0xffffff );
 	data.light3d.position.set( 1, 1, -1);
@@ -548,28 +222,14 @@ function setUp3d() {
   data.light2d.position.set(0, 0, -1);
 
   data.removeableItems = [];
-
-  setUpGUI();
 }
 
-//------------------------------------------------------------------------------
-// Initilize the gui with all the tuneable parameters
-
-function setUpGUI() {
-  // var gui = new DAT.GUI({
-  //   height : 5 * 32 - 1
-  // });
-
-  // var params = {
-  //   'Point Seed' : data.pSeed,
-  //   'Map Seed' : data.mSeed,
-  //   'Number of Points': data.numPoints,
-  //   'Width': data.width,
-  //   'Height': data.height
-  // };
-
-  // gui.add(params, 'Point Seed');
-  // gui.add(params, 'Map Seed');
+function updateRendererProperties() {
+  data.camera.position.x = data.width;
+  data.camera.position.y = data.height;
+  data.camera.left = data.width;
+  data.camera.right = data.height;
+  data.renderer.setSize(data.width, data.height);
 }
 
 //------------------------------------------------------------------------------
@@ -623,13 +283,13 @@ function addToScene(obj) {
 //    function(center, corner1, corner2):
 //      returns [center color, c1 color, c2 color] (THREE.Color)
 
-function draw3d(r3d, drawRivers, drawCoast, colorFn) {
+function draw3d(drawRivers, drawCoast, colorFn) {
   // Remove all the old objects in the scene
   clean();
 
   // Show either a 3D or 2D representation of the map
   var eleScale;
-  if (r3d) {
+  if (data.render.draw3d) {
     light3d();
     eleScale = 50;
   } else {
@@ -711,7 +371,6 @@ function draw3d(r3d, drawRivers, drawCoast, colorFn) {
       var coast = new THREE.LineSegments(coastGeom, coastMat);
       addToScene(coast);
     }
-
   }
 
   renderScene();
@@ -732,11 +391,16 @@ function draw3d(r3d, drawRivers, drawCoast, colorFn) {
 
 function rampColoring(low, high, prop) {
   function colorFn(center, c1, c2) {
-    return [
-      new THREE.Color( Util.lerpColor(low, high, center[prop]) ),
-      new THREE.Color( Util.lerpColor(low, high, c1[prop]) ),
-      new THREE.Color( Util.lerpColor(low, high, c2[prop]) )
-    ];
+    if (data.render.smooth) {
+      return [
+        new THREE.Color( Util.lerpColor(low, high, center[prop]) ),
+        new THREE.Color( Util.lerpColor(low, high, c1[prop]) ),
+        new THREE.Color( Util.lerpColor(low, high, c2[prop]) )
+      ];
+    } else {
+      var color = new THREE.Color( Util.lerpColor(low, high, center[prop]) );
+      return [color, color, color];
+    }
   };
   return colorFn
 }

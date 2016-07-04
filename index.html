@@ -22,38 +22,9 @@
   </head>
   <body onload='main()'>
 
-  <div class='wrapper'>
+  <div class='wrapper' class='Aligner'>
 
-    <div class='buttons'>
-      <button onclick='generate()'>Generate</button><button onclick='generateRandom()'>Generate Random</button></br>
-      <form id='form'>
-        Point Seed: <input id='pointSeed' type="Number" name="pointSeed" placeholder="Point Seed">
-        Map Seed: <input id='mapSeed' type="Number" name="mapSeed" placeholder="Map Seed"></br>
-
-        Number of Points: <input id='numPoints' type="Number" name="numPoints" placeholder="Number of Pounts"></br>
-
-        Width: <input id='width' type="Number" name="width" placeholder="Width">
-        Height: <input id='height' type="Number" name="height" placeholder="Height"></br>
-
-        Daigram: <input type="checkbox" name="diagram" value="false">
-        Plates: <input type="checkbox" name="plates" value="false">
-        Plate Boundaries: <input type="checkbox" name="boundaries" value="false">
-        Plate Types: <input type="checkbox" name="plateTypes" value="false">
-        Provinces: <input type="checkbox" name="provinces" value="false">
-        Towns: <input type="checkbox" name="towns" value="false"></br>
-
-        Genaric Map: <input type='radio' name='drawMap' value='color' checked='checked'>
-        Biome Map: <input type='radio' name='drawMap' value='biome'>
-        Geological Provinces: <input type='radio' name='drawMap' value='groProvinces'>
-        Elevation: <input type='radio' name='drawMap' value='elevation'>
-        Moisture: <input type='radio' name='drawMap' value='moisture'>
-        Temperature: <input type='radio' name='drawMap' value='temperature'>
-        Living Conditions: <input type='radio' name='drawMap' value='livingCondition'>
-        3D Map: <input type='radio' name='drawMap' value='render'></br>
-      </form>
-    </div>
-
-    <div id='jsHook' ></div>
+    <div id='jsHook' class='Aligner-item'></div>
 
   </div>
 

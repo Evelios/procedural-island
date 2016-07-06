@@ -16,3 +16,9 @@ Javascript Voronoi Library: https://github.com/gorhill/Javascript-Voronoi
 Javascript Perlin and Simplex Noise Library: https://github.com/josephg/noisejs
 
 Javascript Seeded Random Numbers: https://github.com/davidbau/seedrandom
+
+Javascript Poisson Disk Point Sampling: https://github.com/jeffrey-hearn/poisson-disk-sample
+
+Dat GUI Chrome Experiments gui system: https://workshop.chromeexperiments.com/examples/gui/
+
+Three.js WebGL Wrapper for rendering: http://threejs.org/

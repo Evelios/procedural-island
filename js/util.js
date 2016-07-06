@@ -129,7 +129,7 @@ Util.propComp = function(prop) {
 // @returns {string} : the hexidecimal interpolation from a to b by amount
 
 Util.lerpColor = function(a, b, amount) {
-  if (amount === undefined || amount == null || amount > 1.0) {
+  if (amount === undefined || amount == null || amount > 1.0 || amount < 0.0) {
     return '#FF00FF';
   }
 

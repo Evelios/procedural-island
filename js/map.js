@@ -49,6 +49,7 @@ Map.prototype.generateMap = function() {
 
 	// Assign Moisture
   this.createRivers();
+	this.errodeRivers(); // adjusts elevation
 	this.assignCornerMoisture();
 	this.redistributeMoisture(this.landCorners());
 	this.assignPolygonAverage('moisture');
@@ -550,7 +551,7 @@ Map.prototype.assignCornerGeoProvinces = function() {
 			var x = corner.position.x;
 			var y = corner.position.y;
 			var scale = 10;
-			var noiseOffset = 20 * noise.perlin2(x * scale / this.width, y * scale / this.height);
+			var noiseOffset = 40 * noise.perlin2(x * scale / this.width, y * scale / this.height);
 
 			for (var k = 0; k < this.boundaries.length; k++) {
 				var boundary = this.boundaries[k];
@@ -643,9 +644,9 @@ Map.prototype.assignCornerElevations = function() {
 		var corner = queue.shift();
 
 		// Used for filling algorithm not to get stuck in infinite loop
-		var epsilon = 0.05;
+		var epsilon = 0.03;
 		// Small step used for land tiles
-		var delta = 0.1;
+		var delta = 0.05;
 		// Normal step
 		var step = 1.0;
 
@@ -787,6 +788,42 @@ Map.prototype.createRivers = function() {
       corner = corner.downslope;
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// Simulate river errosion by decreasing the corner elevation at the rivers
+// The elevation is decreased more by larger rivers
+
+Map.prototype.errodeRivers = function() {
+	// The errosion rate must be near 0
+	var errosionRate = 0.05;
+
+	// Contains all the locations that have already been processed
+	var centers = {};
+	var adjacent = {};
+
+	for (var i = 0; i < this.corners.length; i++) {
+		var corner = this.corners[i];
+
+		if (corner.river && !corner.water) {
+			corner.elevation *= 1 - (errosionRate * Math.min(corner.river, 3));
+
+			for (var k = 0; k < corner.touches.length; k++) {
+				var center = corner.touches[k];
+				if (!center.water && !centers[center.position.asKey()]) {
+					centers[center.position.asKey()] = center;
+					centers.elevation *= 1 - (errosionRate / 2 * Math.min(corner.river, 3));
+				}
+			}
+			for (var k = 0; k < corner.adjacent.length; k++) {
+				var adj = corner.adjacent[k];
+				if (!adj.water && !adjacent[adj.position.asKey()]) {
+					adjacent[adj.position.asKey] = adjacent;
+					adjacent.elevation *= 1 - (errosionRate / 3 * Math.min(corner.river, 3));
+				}
+			}
+		}
+	}
 }
 
 //------------------------------------------------------------------------------

@@ -76,6 +76,8 @@ function main() {
 
   data.render.draw3d = true;
   data.render.smooth = true;
+  data.render.rivers = true;
+  data.render.coast = false;
   data.render.plateBoundaries = false;
   data.render.towns = false;
 
@@ -117,8 +119,10 @@ function setUpGUI() {
   rendFolder.add(data.render, 'map', data.render.mapTypes).name('Map Types').onChange(render);
   rendFolder.add(data.render, 'draw3d').name('Draw 3D').onChange(render);
   rendFolder.add(data.render, 'smooth').name('Smooth').onChange(render);
-  rendFolder.add(data.render, 'plateBoundaries').name('Plate Boundaries').onChange(render);
-  rendFolder.add(data.render, 'towns').name('Towns').onChange(render);
+  rendFolder.add(data.render, 'rivers').name('Rivers').onChange(render);
+  rendFolder.add(data.render, 'coast').name('Coast').onChange(render);
+  // rendFolder.add(data.render, 'plateBoundaries').name('Plate Boundaries').onChange(render);
+  // rendFolder.add(data.render, 'towns').name('Towns').onChange(render);
 }
 
 //------------------------------------------------------------------------------
@@ -135,9 +139,7 @@ function generateRandom() {
 }
 
 function generate() {
-  if (data.currPSeed != data.pointSeed || data.currMSeed != data.pointMap) {
-    createMap();
-  }
+  createMap();
 }
 
 function createMap() {
@@ -152,33 +154,6 @@ function createMap() {
 }
 
 //------------------------------------------------------------------------------
-// Render Functions
-
-function render() {
-
-  updateRendererProperties();
-
-  // Render a particular map type
-  if (data.render.map == 'Biome') {
-    draw3d(true, false, biomeColoring);
-  } else if (data.render.map == 'Geological Provinces') {
-    draw3d(false, true, geoProvinceColoring);
-  } else if (data.render.map == 'Elevation') {
-    draw3d(false, true, elevationColoring);
-  } else if (data.render.map == 'Moisture') {
-    draw3d(false, true, moistureColoring);
-  } else if (data.render.map == 'Temperature') {
-    draw3d(false, true, temperatureColoring);
-  } else if (data.render.map == 'Living Conditions') {
-    draw3d(false, true, livingConditionsColoring);
-  } else {
-    print(data.render.map + ' is not found.');
-  }
-
-  // Render map overlays
-}
-
-//------------------------------------------------------------------------------
 //
 //        DDDD     RRRR      AAA     W         W       333333    DDDD
 //        D  DD    R   R    A   A    W         W      33    33   D   DD
@@ -187,6 +162,36 @@ function render() {
 //        DDDD     R   R   A     A     WW   WW         333333    DDDDD
 //
 //------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Render Functions
+
+function render() {
+
+  updateRendererProperties();
+
+  // Render a particular map type
+  if (data.render.map == 'Biome') {
+    draw3d(biomeColoring);
+  } else if (data.render.map == 'Geological Provinces') {
+    draw3d(geoProvinceColoring);
+  } else if (data.render.map == 'Elevation') {
+    draw3d(elevationColoring);
+  } else if (data.render.map == 'Moisture') {
+    draw3d(moistureColoring);
+  } else if (data.render.map == 'Temperature') {
+    draw3d(temperatureColoring);
+  } else if (data.render.map == 'Living Conditions') {
+    draw3d(livingConditionsColoring);
+  } else {
+    print(data.render.map + ' is not found.');
+  }
+
+  // Render map overlays
+  if (data.render.plateBoundaries) {
+    drawEdges(data.map.plates.edges, plateBoundarieColoring);
+  }
+}
 
 //------------------------------------------------------------------------------
 // Set up the WebGL renderer and necessary renderin objects for displaying
@@ -198,13 +203,12 @@ function setUp3d() {
 
   data.camera = new THREE.OrthographicCamera(data.width, 0 , data.height, 0, 1, 1000);
 
+  data.camera.up = new THREE.Vector3(0, 0, 1);
+
   // Rotate the camera to be in line with the 2D space
   data.camera.rotation.z = Math.PI;
 
-  data.camera.position.x = data.width;
-  data.camera.position.y = data.height;
-  data.camera.position.z = 100;
-
+  data.camera.position.set(data.width, data.height, 200);
 
   data.renderer = new THREE.WebGLRenderer( { antialias: true } );
   data.renderer.setSize(data.width, data.height);
@@ -214,9 +218,13 @@ function setUp3d() {
   // Lights
   data.ambient = new THREE.AmbientLight( 0xffffff , 0.421 );
 
-  data.light3d = new THREE.DirectionalLight( 0xffffff );
+  data.light3d = new THREE.DirectionalLight( 0xffffff, 1 );
 	data.light3d.position.set( 1, 1, -1);
   data.light3d.castShadow = true;
+
+  data.light3dFill = new THREE.DirectionalLight( 0xffffff, 0.25 );
+  data.light3dFill.position.set( -1, 1, -1);
+  data.light3dFill.castShadow = true;
 
   data.light2d = new THREE.DirectionalLight( 0xffffff );
   data.light2d.position.set(0, 0, -1);
@@ -225,11 +233,11 @@ function setUp3d() {
 }
 
 function updateRendererProperties() {
-  data.camera.position.x = data.width;
-  data.camera.position.y = data.height;
-  data.camera.left = data.width;
-  data.camera.right = data.height;
   data.renderer.setSize(data.width, data.height);
+  data.camera.position.set(data.width, data.height, 200);
+  data.camera.left = data.width;
+  data.camera.top = data.height;
+  data.camera.updateProjectionMatrix();
 }
 
 //------------------------------------------------------------------------------
@@ -241,6 +249,7 @@ function light2d() {
 
 function light3d() {
   addToScene(data.light3d);
+  // addToScene(data.light3dFill);
   addToScene(data.ambient);
 }
 
@@ -283,7 +292,7 @@ function addToScene(obj) {
 //    function(center, corner1, corner2):
 //      returns [center color, c1 color, c2 color] (THREE.Color)
 
-function draw3d(drawRivers, drawCoast, colorFn) {
+function draw3d(colorFn) {
   // Remove all the old objects in the scene
   clean();
 
@@ -329,7 +338,7 @@ function draw3d(drawRivers, drawCoast, colorFn) {
   var terrainMat = new THREE.MeshPhongMaterial (
     {
       color: 0xffffff,
-      shading: THREE.FlatShading,
+      // shading: THREE.FlatShading,
       vertexColors: THREE.VertexColors
     }
   );
@@ -338,35 +347,33 @@ function draw3d(drawRivers, drawCoast, colorFn) {
   addToScene(terrain);
 
   // Draw the rivers and coast border
-  if (drawRivers || drawCoast) {
-    var riverVert = 0;
+  if (data.render.rivers || data.render.coast) {
     var riverGeom = new THREE.Geometry();
 
-    var coastVert = 0;
     var coastGeom = new THREE.Geometry();
 
     for (var i = 0;  i < data.map.edges.length; i++) {
       var edge = data.map.edges[i];
       var v0 = edge.v0;
       var v1 = edge.v1;
-      if (drawRivers && edge.river) {
+      if (data.render.rivers && edge.river) {
         riverGeom.vertices.push(
-          new THREE.Vector3(v0.position.x, v0.position.y, v0.elevation * eleScale),
-          new THREE.Vector3(v1.position.x, v1.position.y, v1.elevation * eleScale)
+          new THREE.Vector3(v0.position.x, v0.position.y, v0.elevation * eleScale * 1.1 + 0.1),
+          new THREE.Vector3(v1.position.x, v1.position.y, v1.elevation * eleScale * 1.1 + 0.1)
         );
-      } else if (drawCoast && edge.coast) {
+      } else if (data.render.coast && edge.coast) {
         coastGeom.vertices.push(
-          new THREE.Vector3(v0.position.x, v0.position.y, v0.elevation * eleScale),
-          new THREE.Vector3(v1.position.x, v1.position.y, v1.elevation * eleScale)
+          new THREE.Vector3(v0.position.x, v0.position.y, 0.1),
+          new THREE.Vector3(v1.position.x, v1.position.y, 0.1)
         );
       }
     }
-    if (drawRivers) {
+    if (data.render.rivers) {
       var riverMat = new THREE.LineBasicMaterial( { color: colors.water, linewidth: 3 } );
       var rivers = new THREE.LineSegments(riverGeom, riverMat);
       addToScene(rivers);
     }
-    if (drawCoast) {
+    if (data.render.coast) {
       var coastMat = new THREE.LineBasicMaterial( { color: colors.lightGray, linewidth: 3 } );
       var coast = new THREE.LineSegments(coastGeom, coastMat);
       addToScene(coast);
@@ -374,6 +381,86 @@ function draw3d(drawRivers, drawCoast, colorFn) {
   }
 
   renderScene();
+}
+
+//------------------------------------------------------------------------------
+function drawTiles(tiles, colorFn) {
+  var eleScale = 0;
+  if (data.render.draw3d) {
+    eleScale = 50;
+  }
+
+  // Create the terrain mesh from the data.map object
+  var geometry = new THREE.Geometry();
+  var vert = 0;
+
+  for (var i = 0; i < tiles.length; i++) {
+    var center = tiles[i];
+
+    for (var k = 0; k < center.corners.length; k++) {
+      var c1 = center.corners[k];
+      var c2 = center.corners[(k+1) % center.corners.length];
+
+      geometry.vertices.push(
+        new THREE.Vector3(center.position.x, center.position.y, center.elevation * eleScale),
+        new THREE.Vector3(c1.position.x, c1.position.y, c1.elevation * eleScale),
+        new THREE.Vector3(c2.position.x, c2.position.y, c2.elevation * eleScale)
+      );
+
+      var face = new THREE.Face3(vert, vert+1, vert+2);
+      // Get colors from the color function
+      var vertColors = colorFn(center, c1, c2);
+      face.vertexColors = vertColors;
+
+      geometry.faces.push(face);
+      vert += 3;
+    }
+  }
+  geometry.mergeVertices();
+  geometry.computeFaceNormals();
+
+  var material = new THREE.MeshPhongMaterial (
+    {
+      color: 0xffffff,
+      shading: THREE.FlatShading,
+      vertexColors: THREE.VertexColors
+    }
+  );
+
+  var mesh = new THREE.Mesh(geometry, material);
+  addToScene(mesh);
+}
+
+//------------------------------------------------------------------------------
+function drawEdges(edges, colorFn) {
+  var eleScale = 0;
+  if (data.render.draw3d) {
+    eleScale = 50;
+  }
+  var geometry = new THREE.Geometry();
+
+  for (var i = 0;  i < edges.length; i++) {
+    var edge = edges[i];
+    var v0 = edge.v0;
+    var v1 = edge.v1;
+    var e1 = v0.elevation >= 0 ? v0.elevation * eleScale * 1.1 + 0.1 : 75;
+    var e2 = v1.elevation >= 0 ? v1.elevation * eleScale * 1.1 + 0.1 : 75;
+
+    geometry.vertices.push(
+      new THREE.Vector3(v0.position.x, v0.position.y, e1),
+      new THREE.Vector3(v1.position.x, v1.position.y, e2)
+    );
+    // geometry.colors.extend(colorFn(edge));
+  }
+  var material = new THREE.LineBasicMaterial(
+    {
+      color: colors.white,
+      // vertexColors: THREE.VertexColors,
+      linewidth: 3
+    }
+  );
+  var mesh = new THREE.LineSegments(geometry, material);
+  addToScene(mesh);
 }
 
 //------------------------------------------------------------------------------
@@ -409,8 +496,10 @@ function rampColoring(low, high, prop) {
 //        Map Colorings
 //------------------------------------------------------------------------------
 
+// Polygon Colorings
+
 function biomeColoring(center, c1, c2) {
-  if (center.ocean && (!c1.ocean || !c2.ocean)) {
+  if (!data.render.smooth || center.ocean && (!c1.ocean || !c2.ocean)) {
     var color = new THREE.Color(colors[center.biome]);
     return [color, color, color];
   }
@@ -422,7 +511,7 @@ function biomeColoring(center, c1, c2) {
 }
 
 function geoProvinceColoring(center, c1, c2) {
-  if (center.ocean && (!c1.ocean || !c2.ocean)) {
+  if (!data.render.smooth || center.ocean && (!c1.ocean || !c2.ocean)) {
     var color = new THREE.Color(colors[center.geoProvince]);
     return [color, color, color];
   }
@@ -441,10 +530,25 @@ temperatureColoring = rampColoring(colors.cold, colors.hot, 'temperature');
 
 livingConditionsColoring = rampColoring(colors.bad, colors.good, 'livingCondition');
 
+// Edge colorings
+
+function plateBoundarieColoring(edge) {
+  var color;
+  color = colors.good;
+  // if (edge.boundaryType < 1) {
+  //   color = Util.lerpColor(colors.convergent, colors.transform, edge.boundaryType);
+  // } else {
+  //   color = Util.lerpColor(colors.divergent, colors.transform, edge.boundaryType - 1);
+  // }
+  var threeColor = new THREE.Color(color);
+  return [threeColor, threeColor];
+}
 
 //------------------------------------------------------------------------------
 //        Map Overlays
 //------------------------------------------------------------------------------
+
+
 
 function addTowns() {
 

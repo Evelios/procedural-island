@@ -1,12 +1,9 @@
 Adjust River Width
-Adjust River Elevation
-Adjust Lake Elevation
-GUI For property adjustment
-- camera angle
-Poisson Random Points
-Allow WebGL renderer to change sizes
+
 Since corners are land tiles, they can have an end elevation other than 0
 
 overlays
 plate Boundaries
 towns
+
+there are some artifacts on the edge of the map and in flat areas.

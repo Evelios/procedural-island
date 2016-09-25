@@ -44,12 +44,12 @@ Map.prototype.generateMap = function() {
 	this.assignCornerElevations();
 	this.redistributeElevations(this.landCorners());
 	this.calculateDownslopes();
-	this.fixLakeElevation();
 	this.assignPolygonAverage('elevation');
 
 	// Assign Moisture
-  this.createRivers();
+ 	this.createRivers();
 	this.errodeRivers(); // adjusts elevation
+	this.fixLakeElevation();
 	this.assignCornerMoisture();
 	this.redistributeMoisture(this.landCorners());
 	this.assignPolygonAverage('moisture');

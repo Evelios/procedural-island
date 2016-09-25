@@ -21,10 +21,6 @@
 //    .edges (List<Edge>): All the center objects of the diagram
 //    .corners (List<Corner>): All the center objects of the diagram
 //
-//  Issues:
-//    Both the improveCorners and the sortCorners functions take up a lot of
-//    processing time. Because of this, improveCorners is not called.
-//
 //------------------------------------------------------------------------------
 
 var Center = function(pos) {
@@ -259,10 +255,9 @@ Diagram.prototype.convertDiagram = function(voronoi) {
     }
 
     this.edges.push(newEdge);
-
-    // this.improveCorners();
-    this.sortCorners();
   }
+  this.improveCorners();
+  this.sortCorners();
 }
 
 //------------------------------------------------------------------------------

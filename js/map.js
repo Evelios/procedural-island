@@ -732,7 +732,7 @@ Map.prototype.fixLakeElevation = function() {
 			var adj = corner.adjacent[i];
 
 			if (corner.water && adj.elevation < corner.elevation) {
-				adj.elevation = corner.elevation;
+				corner.elevation = adj.elevation;
 				queue.push(adj);
 			}
 		}

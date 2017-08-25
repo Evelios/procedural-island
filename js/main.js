@@ -59,14 +59,14 @@ function main() {
   data.width = 800;
   data.height = 400;
 
-  data.numPoints = 1000;
+  data.numPoints = 8000;
 
-  data.maxSeed = 65536;
-  data.pointSeed = 0;
-  data.mapSeed = 0;
+  data.maxSeed = 49682;
+  data.pointSeed = 33113;
+  data.mapSeed = 57173;
   data.currPSeed = data.pointSeed;
   data.currMSeed = data.pointMap;
-  randSeeds();
+  //randSeeds();
 
   // Rendering Properties
   data.render = {};
@@ -109,8 +109,8 @@ function setUpGUI() {
 
   var paramsFolder = gui.addFolder('Parameters');
 
-  paramsFolder.add(data, 'pointSeed').name('Point Seed');
-  paramsFolder.add(data, 'mapSeed').name('Map Seed');
+  paramsFolder.add(data, 'pointSeed').name('Point Seed').listen();
+  paramsFolder.add(data, 'mapSeed').name('Map Seed').listen();
   paramsFolder.add(data, 'numPoints').name('Number of Points');
   paramsFolder.add(data, 'width').name('Width');
   paramsFolder.add(data, 'height').name('Height');

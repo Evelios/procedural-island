@@ -644,9 +644,9 @@ Map.prototype.assignCornerElevations = function() {
 		var corner = queue.shift();
 
 		// Used for filling algorithm not to get stuck in infinite loop
-		var epsilon = 0.03;
+		var epsilon = 0.0125;
 		// Small step used for land tiles
-		var delta = 0.05;
+		var delta = 0.025;
 		// Normal step
 		var step = 1.0;
 

@@ -8,6 +8,7 @@ To test out the project you can simply download the repository and run the index
 
 Thanks for taking a look and I hope you enjoy.
 
+![Example Image](/example.png "Sample Image Generated")
 
 I would like to give thanks to the people whose libraries helped make this project a reality
 

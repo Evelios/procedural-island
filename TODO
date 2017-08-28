@@ -7,3 +7,14 @@ plate Boundaries
 towns
 
 there are some artifacts on the edge of the map and in flat areas.
+
+Make the map seeds for each large generation chunk unique and repeatable with other changin parameters.
+Store map seeds from the beginning for the following
+    - Point Generation
+    - Plate Location Generation
+    - Island Seed Location
+    - River Generation Location
+    - Town Generation Locations
+    - Ect
+
+This can probably be done by storing a stack of random seeds to choose from based off the base seed

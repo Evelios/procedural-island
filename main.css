@@ -9,20 +9,13 @@ body {
 	background-color: #4864DB;
 }
 
-canvas {
-  border: 1px solid #AAA;
-}
-
 .wrapper {
-  padding: 100px;
-}
-
-.Aligner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.Aligner-item {
-  max-width: 50%;
+  border: 2px solid #6780ea;
+  position:absolute;
+  top:50%;
+  left:50%;
+  padding:15px;
+  -ms-transform: translateX(-50%) translateY(-50%);
+  -webkit-transform: translate(-50%,-50%);
+  transform: translate(-50%,-50%);
 }

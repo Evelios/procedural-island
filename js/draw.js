@@ -1,3 +1,5 @@
+// This file is not necessary any more since HTML Canvas is not being used
+
 var Draw = {}
 
 Draw.setStroke = function(screen, color) {

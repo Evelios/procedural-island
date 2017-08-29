@@ -1,3 +1,12 @@
+// *****************************************************************************
+// This file is ment to be used as a series of utility function that are added
+// on top of the javascript framework. They are intended to make writing
+// some javascript functionality easier. Some functions extend existing
+// functionality and containers and others are used in their own context.
+// This file is intended to be used for a dumping ground for useful functions
+// that don't seem to have another practical location
+
+// *****************************************************************************
 // ********** Development Functions ********************************************
 
 // A quick option for calling the console.log function
@@ -5,6 +14,7 @@ function print(args) {
   console.log(args)
 }
 
+// *****************************************************************************
 // ********** Modifier Functions ***********************************************
 
 // Checks to see if an object is in the array
@@ -49,6 +59,7 @@ Array.prototype.findProp = function(value, prop) {
   return -1;
 }
 
+// *****************************************************************************
 // *********** Utility Functions ***********************************************
 
 // Used for testing if an object contains a particular property

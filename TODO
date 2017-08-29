@@ -8,13 +8,28 @@ towns
 
 there are some artifacts on the edge of the map and in flat areas.
 
-Make the map seeds for each large generation chunk unique and repeatable with other changin parameters.
-Store map seeds from the beginning for the following
-    - Point Generation
-    - Plate Location Generation
-    - Island Seed Location
-    - River Generation Location
-    - Town Generation Locations
-    - Ect
+There is one problem where rivers are placed differently because the river start location is determined
+by selecting a random tile to place the river on. This creates a dependency between the number of tiles
+and the river generation algorithm. This can be fixed by building a more weather based approach to
+moisture and river generation.
 
-This can probably be done by storing a stack of random seeds to choose from based off the base seed
+Errosion Patterns
+
+There are some some issues with rendering where the screen shows black or the screen is half rendered.
+
+-- Empty Screen
+[.Offscreen-For-WebGL-00000000071857C0]GL ERROR :GL_INVALID_OPERATION : glDrawArrays: attempt to access out of range vertices in attribute 0
+
+-- Half Rendered?
+Uncaught TypeError: Reduce of empty array with no initial value
+    at Array.reduce (<anonymous>)
+    at Object.Util.objMax (util.js:117)
+    at Object.LandForms.assignPolygonGeoProvinces (LandForms.js:355)
+    at Map.generateMap (map.js:44)
+    at new Map (map.js:25)
+    at createMap (main.js:151)
+    at Object.generate [as Generate Map] (main.js:144)
+    at FunctionController.fire (DAT.GUI.js:1087)
+    at HTMLDivElement.<anonymous> (DAT.GUI.js:1064)
+    at Object.fakeEvent (DAT.GUI.js:443)
+

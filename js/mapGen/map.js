@@ -19,7 +19,9 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 	// Set seed values for the map
 	noise.seed(this.mSeed);
 	Math.seedrandom(this.pSeed);
+    this.generateSeedList(10);
 
+    // Create the map
 	this.generateMap();
 }
 
@@ -35,18 +37,21 @@ Map.prototype.generateMap = function() {
 	this.generateTiles();
 
 	// Land Forms
+    this.useNextSeed();
 	LandForms.assignOceanCoastAndLand(this);
 	LandForms.generateTectonicPlates(this);
 	LandForms.assignCornerGeoProvinces(this);
 	LandForms.assignPolygonGeoProvinces(this);
 
 	// Elevations
+    this.useNextSeed();
 	Elevation.assignCornerElevations(this);
 	Elevation.redistributeElevations(this.landCorners());
 	Elevation.calculateDownslopes(this);
 	this.assignPolygonAverage('elevation');
 
 	// Assign Moisture
+    this.useNextSeed();
  	Moisture.createRivers(this);
 	//Moisture.errodeRivers(this);     // adjusts elevation
 	//Moisture.fixLakeElevation(this); // adjusts elevation
@@ -55,12 +60,40 @@ Map.prototype.generateMap = function() {
 	this.assignPolygonAverage('moisture');
 
 	// Temperature
+    this.useNextSeed();
 	Temperature.assignCornerTemperatures(this);
 	this.assignPolygonAverage('temperature');
 
 	// Biomes
 	Biomes.assignCornerBiomes(this);
 	Biomes.assignCenterBiomes(this);
+}
+
+//------------------------------------------------------------------------------
+// Helper function for storing a list of seeds that can be initially generated
+// This helps to preserve particular chunks of the procedural generation scheme
+// so that each chunk runs the same given a particular seed without worying
+// about what each process did before it
+
+Map.prototype.generateSeedList = function(size) {
+    this.seedList = [];
+    for (i = 0; i < size; i++) {
+        this.seedList.push(Util.randInt(0, Number.MAX_SAFE_INTEGER));
+    }
+}
+
+//------------------------------------------------------------------------------
+// Sets the next seed based on the seedlist. This is used to create a modular
+// procedural section. This makes that section predictable based off of the
+// initial map seed that was given
+
+Map.prototype.useNextSeed = function() {
+    var seed = this.seedList.pop();
+    if (seed == undefined) {
+        print("Ran out of stored seeds to use");
+        return;
+    }
+    Math.seedrandom(seed);
 }
 
 //------------------------------------------------------------------------------

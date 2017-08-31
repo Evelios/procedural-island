@@ -283,7 +283,7 @@ Diagram.prototype.improveCorners = function() {
 
 			for (var k = 0; k < corner.touches.length; k++) {
 				var neighbor = corner.touches[k];
-				newPos = newPos.add(neighbor.position);
+				newPos = Vector.add(newPos, neighbor.position);
 			}
 
 			newPos = newPos.divide(corner.touches.length);

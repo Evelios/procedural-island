@@ -1,3 +1,4 @@
+//------------------------------------------------------------------------------
 // This file is a module to the map.js function
 // The purpose of this module is to generate moisture
 // It does this by creating rivesr that run out to the ocean and by generating

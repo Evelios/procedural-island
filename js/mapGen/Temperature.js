@@ -1,3 +1,4 @@
+//------------------------------------------------------------------------------
 // This file is a module to the map.js function
 // The purpose of this module is to create a temperature map to overlay
 

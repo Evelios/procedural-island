@@ -24,13 +24,12 @@ Vector.zero = function() {
 
 // Basic Math Functions
 
-
-Vector.prototype.add = function(other) {
-  return new Vector(this.x + other.x, this.y + other.y);
+Vector.add = function(a, b) {
+  return new Vector(a.x + b.x, a.y + b.y);
 };
 
-Vector.prototype.subtract = function(other) {
-  return new Vector(this.x - other.x, this.y - other.y);
+Vector.subtract = function(a, b) {
+  return new Vector(a.x - b.x, a.y - b.y);
 }
 
 Vector.prototype.multiply = function(scalar) {
@@ -41,7 +40,6 @@ Vector.prototype.divide = function(scalar) {
   return new Vector(this.x / scalar, this.y / scalar);
 }
 
-
 // Returns a vector that has been rotated by ammount in radians
 Vector.prototype.rotate = function(radians) {
   var c = Math.cos(radians);
@@ -51,14 +49,19 @@ Vector.prototype.rotate = function(radians) {
 
 // Advanced Vector Functions
 
-Vector.prototype.dot = function(other) {
-  return this.x * other.x + this.y * other.y;
+Vector.dot = function(a, b) {
+  return a.x * b.x + a.y * b.y;
+}
+
+Vector.cross = function(a, b) {
+  return a.x * b.y - a.y * b.x;
 }
 
 Vector.prototype.magnitude = function() {
   return Math.sqrt(this.x * this.x + this.y * this.y);
 }
 
+// Get the unit vector
 Vector.prototype.normalize = function() {
   return this.divide(this.magnitude());
 }
@@ -70,11 +73,11 @@ Vector.midpoint = function(a, b) {
 }
 
 Vector.proj = function(a, b) {
-  return b.multiply(a.dot(b) / Math.pow(b.magnitude(), 2) );
+  return b.multiply(Vector.dot(a, b) / Math.pow(b.magnitude(), 2) );
 }
 
 Vector.angle = function(a, b) {
-  return acos(a.dot(b) / (a.magnitude() * b.magnitude()));
+  return acos(Vector.dot(a, b) / (a.magnitude() * b.magnitude()));
 }
 
 Vector.distance = function(a, b) {
@@ -102,4 +105,13 @@ Vector.distToSegSquared = function(p, v, w) {
 // Distance of a point to a line segment
 Vector.distToSeg = function(p, v, w) {
   return Math.sqrt(Vector.distToSegSquared(p, v, w));
+}
+
+// Get the two unit vectors perpendicular to the current vector
+// returns (list<Vector>) The vector perpendicular in the order
+//  [v < +90deg, v < -90deg]
+Vector.prototype.perpendiculars = function() {
+  plus90 = new Vector(-this.y, this.x).normalize()
+  minus90 = new Vector(this.y, -this.x).normalize()
+  return [plus90, minus90];
 }

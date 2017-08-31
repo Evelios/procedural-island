@@ -131,6 +131,19 @@ Util.propComp = function(prop) {
 }
 
 //------------------------------------------------------------------------------
+// https://stackoverflow.com/questions/11409895/whats-the-most-elegant-way-to-cap-a-number-to-a-segment
+// Returns a number whose value is limited to the given range.
+//
+// param {Number} min The lower boundary of the output range
+// param {Number} max The upper boundary of the output range
+// @returns A number in the range [min, max]
+// @type Number
+
+Util.clamp = function(num, min, max) {
+  return Math.min(Math.max(num, min), max);
+};
+
+//------------------------------------------------------------------------------
 // Hexidecimal linear color interpolation by rosszurowski
 // https://gist.github.com/rosszurowski/67f04465c424a9bc0dae
 //

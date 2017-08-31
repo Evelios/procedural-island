@@ -1,3 +1,4 @@
+//------------------------------------------------------------------------------
 // This file is a module to the map.js function
 // The purpose of this function is to generate landforms from a point
 // distribution
@@ -178,7 +179,7 @@ LandForms.generateTectonicPlates = function(map) {
         for (var j = 0; j < plate.neighbors.length; j++) {
             var neighbor = plate.neighbors[j];
 
-            var neighborDirection = neighbor.position.subtract(plate.position).normalize();
+            var neighborDirection = Vector.subtract(neighbor.position, plate.position).normalize();
             var plateDirection = (neighbor.plateType * 2) - 1;
             if (plate.plateType > 0.5) {
                 plateDirection *= -1;
@@ -186,7 +187,7 @@ LandForms.generateTectonicPlates = function(map) {
 
             var neighborInfluence = neighborDirection.multiply(plateDirection);
 
-            direction = direction.add(neighborInfluence);
+            direction = Vector.add(direction, neighborInfluence);
         }
         plate.direction = direction.normalize();
     }
@@ -205,7 +206,7 @@ LandForms.generateTectonicPlates = function(map) {
         }
         var d0 = edge.d0.direction;
         var d1 = edge.d1.direction;
-        var direction = d0.add(d1);
+        var direction = Vector.add(d0, d1);
 
         edge.direction = direction;
 
@@ -217,16 +218,16 @@ LandForms.generateTectonicPlates = function(map) {
             // I think it could be easier and simpler to Calculate
             // the angle between r and d0 than to use projections
 
-            var r = edge.d0.position.subtract(edge.d1.position);
+            var r = Vector.subtract(edge.d0.position, edge.d1.position);
             r = r.normalize();
             var nr = r.multiply(-1);
 
             var pd0 = Vector.proj(d0, r);
-            var x1 = pd0.add(r);
+            var x1 = Vector.add(pd0, r);
 
 
             var pd1 = Vector.proj(d1, nr);
-            var x2 = pd1.add(nr);
+            var x2 = Vector.add(pd1, nr);
 
             // Calculate the average
             var boundary = (x1.magnitude() + x2.magnitude()) / 2;

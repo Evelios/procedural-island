@@ -64,6 +64,9 @@ Map.prototype.generateMap = function() {
 	Temperature.assignCornerTemperatures(this);
 	this.assignPolygonAverage('temperature');
 
+    // Weather
+    Weather.assignCornerWindSpeed(this);
+
 	// Biomes
 	Biomes.assignCornerBiomes(this);
 	Biomes.assignCenterBiomes(this);
@@ -249,7 +252,7 @@ Map.prototype.generateTiles = function() {
 Map.prototype.gradient = function(pos) {
   var center = new Vector(this.width / 2, this.height / 2);
   var size = new Vector(this.width, this.height);
-  var deltaVector = pos.subtract(center);
+  var deltaVector = Vector.subtract(pos, center);
   var normalized = new Vector(deltaVector.x / center.x, deltaVector.y / center.y);
   var delta = normalized.magnitude();
   return delta;

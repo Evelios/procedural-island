@@ -1,3 +1,4 @@
+//------------------------------------------------------------------------------
 // This file is a module to the map.js function
 // The purpose of this module is to generate elevation data from the
 // given geological provinces and land data
@@ -89,7 +90,10 @@ Elevation.redistributeElevations = function(locations) {
     //  *  y = 2x - x^2
     //  *  x^2 - 2x + y = 0
     // From this we can use the quadratic equation to get:
-    x = Math.sqrt(scaleFactor) - Math.sqrt(scaleFactor * (1 - y) );
+    // x = Math.sqrt(scaleFactor) - Math.sqrt(scaleFactor * (1 - y) );
+
+    x = Redist.pow(y, 3, false, false);
+
     if (x > 1.0) {
       x = 1.0;
     }

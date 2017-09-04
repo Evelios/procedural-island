@@ -17,6 +17,9 @@ Errosion Patterns
 
 There are some some issues with rendering where the screen shows black or the screen is half rendered.
 
+There might be a map renering or creation error when going aboce a certain number of points. This could be caused
+by the 
+
 -- Empty Screen
 [.Offscreen-For-WebGL-00000000071857C0]GL ERROR :GL_INVALID_OPERATION : glDrawArrays: attempt to access out of range vertices in attribute 0
 

@@ -1,0 +1,34 @@
+Setting a consistant scale for the size of the map
+
+Using a golden ratio map or a monitor resolution map.
+   ____________________
+   |                  | \
+   |                  | |
+   |                  | | Lets say that this is 
+   |                  | | ~ 0.6 : 15000mi
+   |                  | |
+   |__________________| /
+
+   \-- 1 : 25000 mi --/
+
+Earth size is 25,000 circumference aproximately and can be used as a guide for
+setting the size of the rest of the map. This scale can be mapped to 0-1 for the
+0 - 25,000 range so that it makes for easy scaling back to the monitor resolution
+
+The area of this map would be 375,000,000 mi^2
+
+Country / State Scale
+
+  NAME    :  LENGTH  :  UNIT     :  AREA    :  UNIT
+- Tiny    :  50 mi   :  0.002    :  2500    :  6.7e-6
+- Small   :  100 mi  :  0.004    :  10000   :  2.7e-5
+- Medium  :  200 mi  :  0.008    :  40000   :  1.1e-4
+- Large   :  400 mi  :  0.016    :  160000  :  4.7e-4
+- Massive :  800 mi  :  0.036    :  640000  :  0.0017
+
+City Scale
+- Tiny    :  2 mi    :  0.00008  :  4       :  1.1e-8
+- Small   :  5 mi    :  0.0002   :  25      :  6.7e-8
+- Medium  :  10 mi   :  0.0004   :  100     :  2.7e-7
+- Large   :  20 mi   :  0.0008   :  400     :  1.1e-6
+- Massive :  50 mi   :  0.002    :  2500    :  6.7e-6

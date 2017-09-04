@@ -1,0 +1,3 @@
+Rough size of
+8000pt map  : 3mb
+20000pt map : 6.8mb

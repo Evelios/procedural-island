@@ -3,47 +3,51 @@
   <head>
     <meta charset='utf-8'>
     <title>Tectonic Simulator</title>
-    <link rel="stylesheet" href="main.css">
-
-    <!-- Main Script File -->
-    <script src="js/main.js"></script>
-    
-    <!-- Map Generation -->
-    <script src="js/mapGen/Map.js"></script>
-    <script src="js/mapGen/Diagram.js"></script>
-
-    <!-- Land Generation -->
-    <script src="js/mapGen/LandForms.js"></script>
-    <script src="js/mapGen/Elevation.js"></script>
-    <script src="js/mapGen/Moisture.js"></script>
-    <script src="js/mapGen/Temperature.js"></script>
-    <script src="js/mapGen/Biomes.js"></script>
-    <script src="js/mapGen/Weather.js"></script>
-
-    <!-- Culture Generatoin -->
-    <script src="js/Culture.js"></script>
-
-    <!-- Rendering -->
-    <script src="js/rendering/Draw3D.js"></script>
-
-    <!-- Utility Files -->
-    <script src="js/Util.js"></script>
-    <script src="js/Vector.js"></script>
-    <script src="js/Redistribution.js"></script>
+    <link type="text/css" rel="stylesheet" href="main.css">
 
     <!-- Libraries -->
-    <script src="js/lib/rhill-voronoi-core.js"></script>
-    <script src="js/lib/perlin.js"></script>
-    <script src="js/lib/seedrandom.js"></script>
-    <script src="js/lib/poisson-disk.js"></script>
-    <script src="js/lib/DAT.GUI.js"></script>
-    <script src="js/lib/three.js"></script>
+    <script type="text/javascript" src="js/lib/rhill-voronoi-core.js"></script>
+    <script type="text/javascript" src="js/lib/perlin.js"></script>
+    <script type="text/javascript" src="js/lib/seedrandom.js"></script>
+    <script type="text/javascript" src="js/lib/poisson-disk.js"></script>
+    <script type="text/javascript" src="js/lib/DAT.GUI.js"></script>
+    <script type="text/javascript" src="js/lib/three.js"></script>
+    <script type="text/javascript" src="js/lib/paper-core.js"></script>
+    
+    <!-- Map Generation -->
+    <script type="text/javascript" src="js/mapGen/Map.js"></script>
+    <script type="text/javascript" src="js/mapGen/Diagram.js"></script>
+
+    <!-- Land Generation -->
+    <script type="text/javascript" src="js/mapGen/LandForms.js"></script>
+    <script type="text/javascript" src="js/mapGen/Elevation.js"></script>
+    <script type="text/javascript" src="js/mapGen/Moisture.js"></script>
+    <script type="text/javascript" src="js/mapGen/Temperature.js"></script>
+    <script type="text/javascript" src="js/mapGen/Biomes.js"></script>
+    <script type="text/javascript" src="js/mapGen/Weather.js"></script>
+
+    <!-- Culture Generatoin -->
+    <script type="text/javascript" src="js/Culture.js"></script>
+
+    <!-- Rendering -->
+    <script type="text/javascript" src="js/rendering/colorSchemes/DefaultColors.js"></script>
+    <script type="text/javascript" src="js/rendering/Draw3D.js"></script>
+    <script type="text/javascript" src="js/rendering/render2D/PaperRenderer.js" canvas="jsHook"></script>
+
+    <!-- Utility Files -->
+    <script type="text/javascript" src="js/Util.js"></script>
+    <script type="text/javascript" src="js/Vector.js"></script>
+    <script type="text/javascript" src="js/Redistribution.js"></script>
+
+    <!-- Main Script File -->
+    <script type="text/javascript" src="js/main.js"></script>
 
   </head>
   <body onload='main()'>
 
   <div class='wrapper'>
 
+    <!--canvas id="canvas" resize></canvas-->
     <div id='jsHook'></div>
 
   </div>

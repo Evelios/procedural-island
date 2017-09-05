@@ -1,4 +1,11 @@
-var Map = function(width, height, numPoints, pointSeed, mapSeed) {
+var Map = function(params) {
+
+    // Extract User Parameters
+    this.width = params["Width"] || 800;
+    this.height = params["Height"] || 400;
+    this.numPoints = params["Points"] || 5000;
+    this.mSeed = params["Map Seed"] || 0;
+    this.pSeed = params["Point Seed"] || 0;
 
 	// Tuneable parameters
 	this.lakeThreshold = 0.3; // Fraction of water corners for water polygon
@@ -9,12 +16,6 @@ var Map = function(width, height, numPoints, pointSeed, mapSeed) {
 
 	// Point generation function
 	this.pointFunction = this.generatePoissonPoints;
-
-	this.width = width;
-	this.height = height;
-	this.numPoints = numPoints;
-	this.mSeed = mapSeed || Util.rand();
-	this.pSeed = pointSeed || Util.rand();
 
 	// Set seed values for the map
 	noise.seed(this.mSeed);

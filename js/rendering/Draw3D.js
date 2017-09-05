@@ -36,6 +36,8 @@ Draw3D.render = function(data) {
     Draw3D.draw3d(Draw3D.temperatureColoring);
   } else if (data.render.map == 'Living Conditions') {
     Draw3D.draw3d(Draw3D.livingConditionsColoring);
+  } else if (data.render.map == 'White') {
+    Draw3D.draw3d(Draw3D.white);
   } else {
     print(data.render.map + ' is not found.');
   }
@@ -231,12 +233,12 @@ Draw3D.draw3d = function(colorFn) {
       }
     }
     if (data.render.rivers) {
-      var riverMat = new THREE.LineBasicMaterial( { color: colors.water, linewidth: 3 } );
+      var riverMat = new THREE.LineBasicMaterial( { color: DefaultColors.water, linewidth: 3 } );
       var rivers = new THREE.LineSegments(riverGeom, riverMat);
       Draw3D.addToScene(data, rivers);
     }
     if (data.render.coast) {
-      var coastMat = new THREE.LineBasicMaterial( { color: colors.lightGray, linewidth: 3 } );
+      var coastMat = new THREE.LineBasicMaterial( { color: DefaultColors.lightGray, linewidth: 3 } );
       var coast = new THREE.LineSegments(coastGeom, coastMat);
       Draw3D.addToScene(data, coast);
     }
@@ -268,7 +270,7 @@ Draw3D.drawEdges = function(edges, colorFn) {
   }
   var material = new THREE.LineBasicMaterial(
     {
-      color: colors.white,
+      color: DefaultColors.white,
       // vertexColors: THREE.VertexColors,
       linewidth: 3
     }
@@ -314,41 +316,45 @@ Draw3D.rampColoring = function(low, high, prop) {
 
 Draw3D.biomeColoring = function(center, c1, c2) {
   if (data.render.polygon || center.ocean && (!c1.ocean || !c2.ocean)) {
-    var color = new THREE.Color(colors[center.biome]);
+    var color = new THREE.Color(DefaultColors[center.biome]);
     return [color, color, color];
   }
   return [
-    new THREE.Color(colors[center.biome]),
-    new THREE.Color(colors[c1.biome]),
-    new THREE.Color(colors[c2.biome])
+    new THREE.Color(DefaultColors[center.biome]),
+    new THREE.Color(DefaultColors[c1.biome]),
+    new THREE.Color(DefaultColors[c2.biome])
   ];
 }
 
 Draw3D.geoProvinceColoring = function(center, c1, c2) {
   if (data.render.polygon || center.ocean && (!c1.ocean || !c2.ocean)) {
-    var color = new THREE.Color(colors[center.geoProvince]);
+    var color = new THREE.Color(DefaultColors[center.geoProvince]);
     return [color, color, color];
   }
   return [
-    new THREE.Color(colors[center.geoProvince]),
-    new THREE.Color(colors[c1.geoProvince]),
-    new THREE.Color(colors[c2.geoProvince])
+    new THREE.Color(DefaultColors[center.geoProvince]),
+    new THREE.Color(DefaultColors[c1.geoProvince]),
+    new THREE.Color(DefaultColors[c2.geoProvince])
   ];
 }
 
-Draw3D.elevationColoring = Draw3D.rampColoring(colors.black, colors.white, 'elevation');
+Draw3D.elevationColoring = Draw3D.rampColoring(DefaultColors.black, DefaultColors.white, 'elevation');
 
-Draw3D.moistureColoring = Draw3D.rampColoring(colors.coast, colors.land, 'moisture');
+Draw3D.moistureColoring = Draw3D.rampColoring(DefaultColors.coast, DefaultColors.land, 'moisture');
 
-Draw3D.temperatureColoring = Draw3D.rampColoring(colors.cold, colors.hot, 'temperature');
+Draw3D.temperatureColoring = Draw3D.rampColoring(DefaultColors.cold, DefaultColors.hot, 'temperature');
 
-Draw3D.livingConditionsColoring = Draw3D.rampColoring(colors.bad, colors.good, 'livingCondition');
+Draw3D.livingConditionsColoring = Draw3D.rampColoring(DefaultColors.bad, DefaultColors.good, 'livingCondition');
+
+Draw3D.white = function(center, c1, c2) {
+  return [new THREE.Color(), new THREE.Color(), new THREE.Color()];
+}
 
 // Edge colorings
 
 Draw3D.plateBoundarieColoring = function(edge) {
   var color;
-  color = colors.good;
+  color = DefaultColors.good;
   // if (edge.boundaryType < 1) {
   //   color = Util.lerpColor(colors.convergent, colors.transform, edge.boundaryType);
   // } else {

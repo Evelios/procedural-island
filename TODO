@@ -1,3 +1,9 @@
+- 2D Rendering
+
+- Nested voronoi diagrams
+
+- Create a consistant map scale
+
 Adjust River Width
 
 Since corners are land tiles, they can have an end elevation other than 0
@@ -6,18 +12,18 @@ overlays
 plate Boundaries
 towns
 
-there are some artifacts on the edge of the map and in flat areas.
+th- ere are some artifacts on the edge of the map and in flat areas.
 
-There is one problem where rivers are placed differently because the river start location is determined
+- There is one problem where rivers are placed differently because the river start location is determined
 by selecting a random tile to place the river on. This creates a dependency between the number of tiles
 and the river generation algorithm. This can be fixed by building a more weather based approach to
 moisture and river generation.
 
-Errosion Patterns
+- Errosion Patterns
 
-There are some some issues with rendering where the screen shows black or the screen is half rendered.
+- There are some some issues with rendering where the screen shows black or the screen is half rendered.
 
-There might be a map renering or creation error when going aboce a certain number of points. This could be caused
+- There might be a map renering or creation error when going aboce a certain number of points. This could be caused
 by the 
 
 -- Empty Screen

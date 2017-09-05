@@ -1,3 +1,6 @@
 Rough size of
 8000pt map  : 3mb
 20000pt map : 6.8mb
+
+It seems like the size will increase with point size.
+that would leave a 75000pt map at ~30mb

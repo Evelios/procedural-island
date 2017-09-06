@@ -10,6 +10,8 @@ body {
 }
 
 .wrapper {
+  width: 95%;
+  height: 95%;
   border: 2px solid #6780ea;
   position:absolute;
   top:50%;
@@ -17,4 +19,9 @@ body {
   -ms-transform: translateX(-50%) translateY(-50%);
   -webkit-transform: translate(-50%,-50%);
   transform: translate(-50%,-50%);
+}
+
+canvas[resize] {
+    width: 100%;
+    height: 100%;
 }

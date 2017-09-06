@@ -12,10 +12,27 @@ Render2D = function(divID) {
 
     var canvas = document.getElementById(divID)
     paper.setup(canvas);
-    var path = new paper.Path();
-    path.strokeColor = "black";
-    var start = new paper.Point(100, 100);
-    path.moveTo(start);
-    path.lineTo(start.add([200, -50]));
+}
+
+Render2D.prototype.render = function(map) {
+	this.renderPolygons(map);
+}
+
+Render2D.prototype.renderPolygons = function(map) {
+	for (var i = 0; i < map.centers.length; i++) {
+    	var center = map.centers[i];
+    	var color = Render2D.biomeColoring(center);
+
+    	var polyPath = new paper.Path(center.corners.getProp("position"))
+    	polyPath.closed = true;
+    	polyPath.strokeColor = color;
+    	polyPath.strokeWidth = 1;
+    	polyPath.fillColor = color;
+    }
+
     paper.view.draw();
+}
+
+Render2D.biomeColoring = function(center) {
+	return DefaultColors[center.biome];
 }

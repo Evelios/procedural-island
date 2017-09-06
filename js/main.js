@@ -31,9 +31,9 @@ function main() {
   data.render.plateBoundaries = false;
   data.render.towns = false;
 
-  // var renderer = new Render2D("canvas");
+  data.renderer = new Render2D("canvas");
 
-  Draw3D.setUp3d(data);
+  // Draw3D.setUp3d(data);
 
   setUpGUI();
 
@@ -81,7 +81,8 @@ function setUpGUI() {
 // Generation Functions
 
 function render() {
-  Draw3D.render(data)
+  data.renderer.render(data.map);
+  // Draw3D.render(data)
 }
 
 function randSeeds() {
@@ -93,12 +94,12 @@ function randSeeds() {
 function generateRandom() {
   randSeeds();
   createMap();
-  Draw3D.render(data);
+  render();
 }
 
 function generate() {
   createMap();
-  Draw3D.render(data);
+  render();
 }
 
 function createMap() {

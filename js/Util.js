@@ -59,6 +59,14 @@ Array.prototype.findProp = function(value, prop) {
   return -1;
 }
 
+Array.prototype.getProp = function(prop) {
+  var out = [];
+  for (var i = 0, l = this.length; i < l; i++) {
+    out.push(this[i][prop])
+  }
+  return out;
+}
+
 // *****************************************************************************
 // *********** Utility Functions ***********************************************
 

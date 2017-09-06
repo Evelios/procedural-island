@@ -224,5 +224,12 @@ Util.rgba = function(r, g, b, a) {
 Util.rgbToHex = function(r, g, b) {
   function rgbToHex(r, g, b) {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
 }
+
+//------------------------------------------------------------------------------
+// Hex String to Hex Number
+
+Util.strToHex = function(hexStr) {
+  return parseInt(hexStr.replace(/^#/, ''), 16);
 }

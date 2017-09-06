@@ -13,6 +13,7 @@
     <script type="text/javascript" src="js/lib/DAT.GUI.js"></script>
     <script type="text/javascript" src="js/lib/three.js"></script>
     <script type="text/javascript" src="js/lib/paper-core.js"></script>
+    <script type="text/javascript" src="https://pixijs.download/dev/pixi.js"></script>
     
     <!-- Map Generation -->
     <script type="text/javascript" src="js/mapGen/Map.js"></script>
@@ -32,6 +33,8 @@
     <!-- Rendering -->
     <script type="text/javascript" src="js/rendering/colorSchemes/DefaultColors.js"></script>
     <script type="text/javascript" src="js/rendering/Draw3D.js"></script>
+    <script type="text/javascript" src="js/rendering/render2D/PixiRenderer.js"></script>
+    <script type="text/javascript" src="js/rendering/render2D/MapColoring.js"></script>
     <script type="text/javascript" src="js/rendering/render2D/PaperRenderer.js" canvas="jsHook"></script>
 
     <!-- Utility Files -->
@@ -45,12 +48,12 @@
   </head>
   <body onload='main()'>
 
-  <div class='wrapper'>
+  <!--div id='wrapper' class='wrapper'>
 
     <canvas id="canvas" resize></canvas>
     <div id='jsHook'></div>
 
-  </div>
+  </div-->
 
   </body>
 </html>

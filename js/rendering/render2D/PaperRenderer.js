@@ -16,6 +16,7 @@ Render2D = function(divID) {
 
 Render2D.prototype.render = function(map) {
 	this.renderPolygons(map);
+    paper.view.draw();
 }
 
 Render2D.prototype.renderPolygons = function(map) {
@@ -29,8 +30,6 @@ Render2D.prototype.renderPolygons = function(map) {
     	polyPath.strokeWidth = 1;
     	polyPath.fillColor = color;
     }
-
-    paper.view.draw();
 }
 
 Render2D.biomeColoring = function(center) {

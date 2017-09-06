@@ -31,7 +31,8 @@ function main() {
   data.render.plateBoundaries = false;
   data.render.towns = false;
 
-  data.renderer = new Render2D("canvas");
+  // data.renderer = new Render2D("canvas");
+  data.renderer = new PixiRenderer("jsHook");
 
   // Draw3D.setUp3d(data);
 
@@ -46,7 +47,7 @@ function main() {
 // Initilize the gui with all the tuneable parameters
 
 function setUpGUI() {
-  var gui = new dat.GUI();
+  var gui = new dat.GUI(); 
 
   var functions = {
     'Generate Map': generate,
@@ -81,7 +82,7 @@ function setUpGUI() {
 // Generation Functions
 
 function render() {
-  data.renderer.render(data.map);
+  data.renderer.render(data.map, data.render);
   // Draw3D.render(data)
 }
 

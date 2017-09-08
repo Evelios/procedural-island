@@ -24,8 +24,11 @@ Weather.getWindVector = function(map, point) {
 
     // The large scale weather pattern
     // There are 6 hadley cells in an ideal weather pattern
-    var x = Math.sin(-6*Math.PI * Math.abs(point.y / map.height));
-    var y = Math.sin(-6*Math.PI * point.y / map.height);
+    var x = Math.sin(-6*Math.PI * Math.abs(point.y / map.height * 2 - 1));
+    // if (point.y < map.heigh / 2) {
+    //     x = -x;
+    // }
+    var y = -Math.sin(-6*Math.PI * point.y / map.height);
 
     // Local variations in weather pattern
     x += 0;

@@ -32,6 +32,10 @@ MapColoring.biomeColoring = function(center) {
   return Util.strToHex(DefaultColors[center.biome])
 }
 
+MapColoring.biomeElevationColoring = function(center) {
+  return MapColoring.rampColoring(DefaultColors[center.biome], DefaultColors.mountain, 'elevation')(center);
+}
+
 MapColoring.geoProvinceColoring = function(center) {
   return Util.strToHex(DefaultColors[center.geoProvince]);
 }

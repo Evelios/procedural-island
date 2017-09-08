@@ -142,8 +142,8 @@ Util.propComp = function(prop) {
 // https://stackoverflow.com/questions/11409895/whats-the-most-elegant-way-to-cap-a-number-to-a-segment
 // Returns a number whose value is limited to the given range.
 //
-// param {Number} min The lower boundary of the output range
-// param {Number} max The upper boundary of the output range
+// @param {Number} min The lower boundary of the output range
+// @param {Number} max The upper boundary of the output range
 // @returns A number in the range [min, max]
 // @type Number
 

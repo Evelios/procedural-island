@@ -1,0 +1,66 @@
+This is the hierarchy of the map structure
+The map structure is extremely self-referential with many of the corners,
+edges, and centers looping back on themselves in some way.
+
+Anything that is labled with an * is optional and may not be present on
+every object.
+
+
+map
+    centers (list)
+        borders   (edge list)
+        corners   (corner list)
+        neighbors (center list)
+
+        moisture
+        temperature
+        elevation
+        geoProvince
+        biome
+        water
+        ocean
+        coast
+        border
+        wind (vector)
+
+        livingCondition
+        town*
+
+        position
+
+    corners (list)
+        adjacent  (corner list)
+        protrudes (edge list)
+        touches   (center list)
+
+        moisture
+        temperature
+        elevation
+        geoProvince
+        biome
+        water
+        ocean
+        wind (vector)
+
+        border
+        coast
+
+        livingCondition
+
+        downslope (corner)
+        position
+
+    edges (list)
+        d0 (center)
+        d1 (center)
+        v0 (corner)
+        v1 (corner)
+
+        coast
+        border
+        
+        midpoint
+
+    plates
+    boundries : all the relevant plate boundires that cause geological features
+    towns

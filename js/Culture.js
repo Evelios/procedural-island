@@ -45,13 +45,33 @@ Culture.createTowns = function(map) {
 	map.towns = [];
 
 	while (numTowns--) {
-		var tile = map.centers[ Util.randInt(0, map.centers.length) ];
-		if (tile.water || tile.town) continue;
+		var center = map.centers[ Util.randInt(0, map.centers.length) ];
+		if (center.water || center.town) continue;
 
 		var settlementRoll = Math.sqrt(Util.rand());
-		if (settlementRoll < tile.livingCondition) {
-			tile.town = true;
-			map.towns.push(tile);
+		if (settlementRoll < center.livingCondition) {
+			var townTile = Culture.livingCondMaxima(center);
+			townTile.town = true;
+			map.towns.push(townTile);
+			// map.towns.push(center);
 		}
 	}
+}
+
+Culture.livingCondMaxima = function(center) {
+	var searchTile;
+	var best = center;
+
+	var maxima = false;
+	while(searchTile != best) {
+		searchTile = best;
+		for (var i = 0; i < searchTile.neighbors.length; i++) {
+			neighbor = searchTile.neighbors[i];
+			if (neighbor.livingCondition > best.livingCondition) {
+				best = neighbor;
+			}
+		}
+	}
+
+	return best;
 }

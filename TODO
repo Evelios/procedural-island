@@ -1,46 +1,50 @@
 - Camera and Zoom
 
-- 2D Rendering
-
 - Nested voronoi diagrams
 
 - Create a consistant map scale
 
-Adjust River Width
+- Create better living conditions near ocean (and possibly rivers)
 
 Since corners are land tiles, they can have an end elevation other than 0
 
 overlays
 plate Boundaries
-towns
 
-th- ere are some artifacts on the edge of the map and in flat areas.
-
-- There is one problem where rivers are placed differently because the river start location is determined
-by selecting a random tile to place the river on. This creates a dependency between the number of tiles
-and the river generation algorithm. This can be fixed by building a more weather based approach to
++ Seeding issue
+    - There is one problem where rivers are placed differently because the river start location is determined
+    by selecting a random tile to place the river on. This creates a dependency between the number of tiles
+    and the river generation algorithm. This can be fixed by building a more weather based approach to
 moisture and river generation.
 
-- Errosion Patterns
++ Weather
+    - Errosion Patterns
+        . This needs to keep the statement that there is not local minima
 
-- There are some some issues with rendering where the screen shows black or the screen is half rendered.
+    - Head transfer through weather system
 
-- There might be a map renering or creation error when going aboce a certain number of points. This could be caused
-by the 
+    - Moisture transfer through weather system
 
--- Empty Screen
-[.Offscreen-For-WebGL-00000000071857C0]GL ERROR :GL_INVALID_OPERATION : glDrawArrays: attempt to access out of range vertices in attribute 0
++ Draw3D
+    - There are some artifacts on the edge of the map and in flat areas.
 
--- Half Rendered?
-Uncaught TypeError: Reduce of empty array with no initial value
-    at Array.reduce (<anonymous>)
-    at Object.Util.objMax (util.js:117)
-    at Object.LandForms.assignPolygonGeoProvinces (LandForms.js:355)
-    at Map.generateMap (map.js:44)
-    at new Map (map.js:25)
-    at createMap (main.js:151)
-    at Object.generate [as Generate Map] (main.js:144)
-    at FunctionController.fire (DAT.GUI.js:1087)
-    at HTMLDivElement.<anonymous> (DAT.GUI.js:1064)
-    at Object.fakeEvent (DAT.GUI.js:443)
+    - There are some some issues with rendering where the screen shows black or the screen is half rendered.
 
+    - There might be a map renering or creation error when going aboce a certain number of points. This could be caused
+    by the 
+
+    -- Empty Screen
+    [.Offscreen-For-WebGL-00000000071857C0]GL ERROR :GL_INVALID_OPERATION : glDrawArrays: attempt to access out of range vertices in attribute 0
+
+    -- Half Rendered?
+    Uncaught TypeError: Reduce of empty array with no initial value
+        at Array.reduce (<anonymous>)
+        at Object.Util.objMax (util.js:117)
+        at Object.LandForms.assignPolygonGeoProvinces (LandForms.js:355)
+        at Map.generateMap (map.js:44)
+        at new Map (map.js:25)
+        at createMap (main.js:151)
+        at Object.generate [as Generate Map] (main.js:144)
+        at FunctionController.fire (DAT.GUI.js:1087)
+        at HTMLDivElement.<anonymous> (DAT.GUI.js:1064)
+        at Object.fakeEvent (DAT.GUI.js:443)

@@ -12,6 +12,14 @@
 
 Redist = {};
 
+Redist.identity = function(x) {
+    return x;
+}
+
+Redist.inverse = function(x) {
+    return 1 - x;
+}
+
 Redist.exp = function(x, amm=1, inc=true) {
     if (inc) {
         var nom = 1 - Math.exp(-amm * x);

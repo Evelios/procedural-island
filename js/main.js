@@ -27,9 +27,9 @@ function main() {
   data.render.smooth = false;
   data.render.polygon = false;
   data.render.coast = false;
-  data.render.windVectors = false;
+  data.render.wind = false;
   data.render.plateBoundaries = false;
-  data.render.towns = false;
+  data.render.towns = true;
 
   // data.renderer = new Render2D("canvas");
   data.renderer = new PixiRenderer("jsHook");
@@ -73,8 +73,8 @@ function setUpGUI() {
   rendFolder.add(data.render, 'smooth').name('Smooth').onChange(render);
   rendFolder.add(data.render, 'polygon').name('Polygon').onChange(render);
   rendFolder.add(data.render, 'coast').name('Coast').onChange(render);
-  rendFolder.add(data.render, 'windVectors').name('Wind').onChange(render);
-  // rendFolder.add(data.render, 'plateBoundaries').name('Plate Boundaries').onChange(render);
+  rendFolder.add(data.render, 'wind').name('Wind').onChange(render);
+  rendFolder.add(data.render, 'plateBoundaries').name('Plate Boundaries').onChange(render);
   rendFolder.add(data.render, 'towns').name('Towns').onChange(render);
 }
 

@@ -66,7 +66,9 @@ Map.prototype.generateMap = function() {
 	this.assignPolygonAverage('temperature');
 
     // Weather
+    this.useNextSeed();
     Weather.assignCornerWindSpeed(this);
+    this.assignPolyVectorAverage('wind');
 
 	// Biomes
 	Biomes.assignCornerBiomes(this);
@@ -203,6 +205,20 @@ Map.prototype.assignPolygonAverage = function(prop) {
 	}
 }
 
+Map.prototype.assignPolyVectorAverage = function(prop) {
+for (var i = 0; i < this.centers.length; i++) {
+        var center = this.centers[i];
+
+        var sum = Vector.zero();
+        for (var k = 0; k < center.corners.length; k++) {
+            var corner = center.corners[k];
+
+            sum = Vector.add(sum, corner[prop]);
+        }
+
+        center[prop] = sum.divide(center.corners.length);
+    }
+}
 //------------------------------------------------------------------------------
 // Helper function to create a voronoi diagram from input points
 //

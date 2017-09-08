@@ -10,10 +10,6 @@ PixiRenderer = function(divID) {
     this.renderer.backgroundColor = Util.strToHex(DefaultColors.ocean);
 
     this.stage = new PIXI.Container();
-
-    this.renderer.render(this.stage);
-    
-
 }
 
 PixiRenderer.prototype.render = function(map, params) {
@@ -39,8 +35,13 @@ PixiRenderer.prototype.render = function(map, params) {
         print(data.render.map + ' is not found.');
     }
 
-
     this.renderPolygons(map, colorFn);
+
+    if (params.towns) {
+        this.renderTowns(map);
+    }
+    
+    this.renderEdges(map, params);
 
     this.renderer.render(this.stage);
 }
@@ -65,9 +66,46 @@ PixiRenderer.prototype.renderPolygons = function(map, colorFn) {
     }
 }
 
-//------------------------------------------------------------------------------
-// Map Colorings
+PixiRenderer.prototype.renderEdges = function(map, params) {
+    for (var i = 0; i < map.edges.length; i++) {
+        var edge = map.edges[i];
 
-PixiRenderer.biomeColoring = function(center) {
-    return DefaultColors[center.biome];
+        // Run through the different edge drawing possibilities
+        // Long term I don't think this is the best place for this
+        if (params.rivers && edge.river) {
+            var line = new PIXI.Graphics();
+            line.lineStyle(2, Util.strToHex(DefaultColors.water), 1);
+            line.moveTo(edge.v0.position.x, edge.v0.position.y);
+            line.lineTo(edge.v1.position.x, edge.v1.position.y);
+            this.stage.addChild(line);
+        } else if (params.coast && edge.coast) {
+            var line = new PIXI.Graphics();
+            line.lineStyle(2, Util.strToHex(DefaultColors.lightGray), 1);
+            line.moveTo(edge.v0.position.x, edge.v0.position.y);
+            line.lineTo(edge.v1.position.x, edge.v1.position.y);
+            this.stage.addChild(line);
+        }
+    }
+}
+
+PixiRenderer.prototype.renderTowns = function(map) {
+    for (var i = 0; i < map.towns.length; i++) {
+        var town = map.towns[i];
+        var color = MapColoring.towns();
+
+        var polyPath = [];
+        for (var k = 0; k < town.corners.length; k++) {
+            var cornerPos = town.corners[k].position;
+            polyPath.push(new PIXI.Point(cornerPos.x, cornerPos.y));
+        }
+
+        var polygon = new PIXI.Graphics();
+        polygon.beginFill(color);
+        polygon.drawPolygon(polyPath);
+        polygon.endFill();
+
+        print(polygon)
+
+        this.stage.addChild(polygon);
+    }
 }

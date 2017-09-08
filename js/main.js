@@ -75,7 +75,7 @@ function setUpGUI() {
   rendFolder.add(data.render, 'coast').name('Coast').onChange(render);
   rendFolder.add(data.render, 'windVectors').name('Wind').onChange(render);
   // rendFolder.add(data.render, 'plateBoundaries').name('Plate Boundaries').onChange(render);
-  // rendFolder.add(data.render, 'towns').name('Towns').onChange(render);
+  rendFolder.add(data.render, 'towns').name('Towns').onChange(render);
 }
 
 //------------------------------------------------------------------------------

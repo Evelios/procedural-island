@@ -26,6 +26,7 @@ MapColoring.rampColoring = function(low, high, prop) {
 
 //------------------------------------------------------------------------------
 // Polygon Colorings
+//------------------------------------------------------------------------------
 
 MapColoring.biomeColoring = function(center) {
   return Util.strToHex(DefaultColors[center.biome])
@@ -47,3 +48,10 @@ MapColoring.white = function(center) {
   return 0xFFFFFF;
 }
 
+//------------------------------------------------------------------------------
+// Overlay Colorings
+//------------------------------------------------------------------------------
+
+MapColoring.towns = function() {
+  return Util.strToHex(Util.randHexColor());
+}
